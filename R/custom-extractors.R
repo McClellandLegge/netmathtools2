@@ -145,7 +145,10 @@ extractStudent <- function(student, handle) {
   )
 
   # set R date/time types
-  # student_profile[]
+  student_profile[, `:=`(
+    startDate = as.Date(startDate),
+    endDate   = as.Date(endDate)
+  )]
 
   return(student_profile)
 }
