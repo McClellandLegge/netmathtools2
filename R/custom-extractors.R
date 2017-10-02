@@ -29,6 +29,8 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
   at_lesson             <- ifelse(nrow(completed_assignments) > 0L,
                                   max(completed_assignments$lesson_num),
                                   0L)
+  data.table::setkey(graded_assignments, lesson_num, tryit_name)
+  data.table::setkey(completed_assignments, lesson_num, tryit_name)
   rm(assignments)
 
   # determine if a HS or EGR section
@@ -51,15 +53,25 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
   # see where the student should be based on the number of days they've been in
   # their course as of today
   if (!is.null(schedule)) {
-    course_days   <- max(schedule$day)
-    at_day        <- schedule[day <= course_days - days_left,
-                              c("lesson", "tryit_name"), with = FALSE]
-    should_lesson <- data.table::last(at_day)$lesson
-    should_be     <- nrow(unique(at_day))
-    rm(at_day, schedule)
+    data.table::setkey(schedule, lesson_num, tryit_name)
+    graded_schedule <- graded_assignments[schedule]
+
+    course_days     <- max(schedule$day)
+    should_schedule <- schedule[day <= course_days - days_left]
+
+    should_day      <- should_schedule[, .(lesson_num, tryit_name)]
+    should_lesson   <- max(should_day$lesson_num)
+    should_tryit    <- nrow(unique(should_day))
+
+    at_schedule     <- graded_schedule[tryit_complete == TRUE]
+    at_day          <- at_schedule[, max(day, 0, na.rm = TRUE)]
+    should_be_day   <- should_schedule[, max(day, 0, na.rm = TRUE)]
+    days_behind     <- should_be_day - at_day
+
   } else {
-    should_be <- NA
-    should_lesson <- NA
+    should_tryit    <- NA
+    should_lesson   <- NA
+    days_behind     <- NA
   }
 
   # summarize the progress by pure completion to recognize (somewhat) if the
@@ -69,9 +81,10 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
   progress_summary <- data.table::data.table(
     completed_assignments = nrow(completed_assignments),
     total_assignments     = nrow(graded_assignments),
-    expected_complete     = should_be,
+    expected_complete     = should_tryit,
     should_lesson         = should_lesson,
-    at_lesson             = at_lesson
+    at_lesson             = at_lesson,
+    days_behind           = days_behind
   )
 
   return(progress_summary)
