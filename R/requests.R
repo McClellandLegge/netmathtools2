@@ -1,0 +1,141 @@
+#' Get Students' Progress
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param students A \code{\link[data.table]{data.table}} returned by \link{getStudents}
+#'
+#' @return A \code{\link[data.table]{data.table}} with the same columns and some
+#'     progress metrics appended
+#' @export
+#' @import data.table
+getStudentsProgress <- function(handle, students) {
+
+  if (!requireNamespace("data.table", quietly = TRUE)) {
+    stop("`data.table` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  students_dt <- data.table::as.data.table(students)
+
+  # get all the grades and then limit to only the homeworks
+  all_grades    <- sapply(students$id, netmathtools2::getGrades, handle = handle, simplify = FALSE)
+  all_notebooks <- sapply(all_grades, `[[`, "homeworks", simplify = FALSE)
+  rm(all_grades)
+
+  # filter out only homeworks (throw out "Reading") and limit to the current course
+  progress_ls <- list()
+  student_ids <- names(all_notebooks)
+  for (k in seq_along(all_notebooks)) {
+    student_id <- student_ids[k]
+    student    <- students_dt[student_id == id]
+    progress_ls[[student_id]] <- netmathtools2::extractStudentProgress(
+      notebooks      = all_notebooks[[student_id]],
+      course_id      = student$mathableCourseId,
+      days_left      = student$endDays
+    )
+  }
+
+  progress <- data.table::rbindlist(progress_ls, idcol = "id")
+  student_progress <- merge(progress, students_dt, by = "id", all.y = TRUE)
+
+  student_progress[, `:=`(
+    tryits_behind  = expected_complete - completed_assignments,
+    lessons_behind = should_lesson - at_lesson,
+    current_pace   = completed_assignments / startDays
+  )]
+
+  student_progress[endDays > 0L, needed_pace := (total_assignments - completed_assignments) / endDays]
+
+  return(student_progress)
+}
+
+
+#' Get a Student's Grades
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param student_id A character string
+#'
+#' @return A JSON list
+#' @export
+getGrades <- function(handle, student_id) {
+
+  req <- file.path("students", student_id, "grades")
+  res <- netmathtools2::getRequest(handle, req)
+
+  return(res)
+}
+
+#' Get a Mentor's Students
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param netid A character string
+#'
+#' @return A \code{\link[data.table]{data.table}}
+#' @export
+#' @import data.table
+getStudents <- function(handle, netid) {
+
+  if (!requireNamespace("data.table", quietly = TRUE)) {
+    stop("`data.table` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  students_ls <- getRequest(
+    handle       = handle,
+    route        = "students",
+    isPartner    = "false",
+    mentor.netId = netid
+  )
+
+  # use a custom extractor to pull out specific information from the list
+  students_detail_ls <- lapply(students_ls, netmathtools2::extractStudent, handle = handle)
+  students_detail    <- data.table::rbindlist(students_detail_ls, fill = TRUE)
+
+  return(students_detail)
+}
+
+#' Execute a GET request
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param route A character string
+#' @param ... Additional arguments to be passed in the url
+#'
+#' @return A JSON list
+#' @export
+getRequest <- function(handle, route, ...) {
+
+  if (!requireNamespace("curl", quietly = TRUE)) {
+    stop("`curl` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("`jsonlite` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  # compose the request url, get the arguments and convert to named list
+  args    <- unlist(list(...))
+  if (missing(...)) {
+    arg_str <- ""
+  } else {
+    arg_str <- paste0(paste0(names(args), "=", args), collapse = "&")
+  }
+  req_url <- sprintf("%s/%s?%s", netmathtools2:::api_endpoint, route, arg_str)
+
+  # perform the request
+  res <- curl::curl_fetch_memory(req_url, handle = handle)
+
+  # check the status code
+
+
+  # extract the content
+  # don't try to flatten the list, but convert arrays to atomic vectors
+  content <- jsonlite::fromJSON(
+    txt               = rawToChar(res$content),
+    flatten           = FALSE,
+    simplifyDataFrame = FALSE,
+    simplifyVector    = TRUE
+    )
+
+  return(content)
+}
