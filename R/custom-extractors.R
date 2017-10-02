@@ -121,6 +121,9 @@ extractStudent <- function(student, handle) {
     timeline <- "original"
   }
 
+  # determine if the student has a proctor
+  has_proctor <- ifelse(length(student[["proctor"]]) > 0L, TRUE, FALSE)
+
   # some Mathable course ids do not have this pre-pended which results in
   # no matches down the road
   mathable_course_id <- student[["mathable"]][["courseId"]]
@@ -130,7 +133,7 @@ extractStudent <- function(student, handle) {
 
   # select some non-array fields
   cstudent_names <- names(student)
-  ix <- which(cstudent_names %in% c("course", "status", "startDate",
+  ix <- which(cstudent_names %in% c("netId", "course", "status", "startDate",
                                     "endDate", "endDays", "startDays"))
 
   # combine with some nested lists and convert to data.table
@@ -140,7 +143,8 @@ extractStudent <- function(student, handle) {
       student[ix],
       student[["name"]],
       mathableCourseId = mathable_course_id,
-      timeline = timeline
+      timeline         = timeline,
+      has_proctor      = has_proctor
     )
   )
 
