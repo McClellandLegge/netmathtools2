@@ -43,7 +43,7 @@ getStudentsProgress <- function(handle, students) {
     current_pace   = completed_assignments / startDays
   )]
 
-  student_progress[, current_pace_interp := currentPaceCompose(current_pace)]
+  student_progress[completed_assignments > 0L, current_pace_interp := currentPaceCompose(current_pace)]
 
   student_progress[endDays > 0L, `:=`(
     needed_pace = (total_assignments - completed_assignments) / endDays
@@ -60,8 +60,10 @@ currentPaceCompose <- function(current_pace, interval = 0.5) {
   cp_long <- round(1 / current_pace / interval) * interval
   cp_short <- round(current_pace / interval) * interval
   msg <- ifelse(current_pace < 1,
-    paste("currently submitting a Try It every", cp_long, "days"),
-    paste("currently submitting", cp_short, "Try It(s) a day")
+                ifelse(current_pace == 0,
+                       "have not submitted any Try Its",
+    paste("have been submitting a Try It every", cp_long, "days")),
+    paste("have been submitting", cp_short, "Try It(s) a day")
   )
   return(msg)
 }
