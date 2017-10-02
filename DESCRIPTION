@@ -1,11 +1,11 @@
 Package: netmathtools2
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.2.2
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Title: Automated NetMath Student Tracker
+Version: 0.2.3
+Authors@R: utils::person("McClelland", "Legge", email = "McClelland.Legge@gmail.com", role = c("aut", "cre"))
+Description: The package helps automate the calculation of a student's status
+    in their course as compared to established schedules and highlights any
+    administrative tasks they have yet to complete.
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
