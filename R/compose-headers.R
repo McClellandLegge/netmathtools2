@@ -67,6 +67,11 @@ decrpytChromeCookies <- function(netid) {
 #' }
 composeNexusHandle <- function(netid) {
 
+  if (!requireNamespace("curl", quietly = TRUE)) {
+    stop("`curl` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   # extract the nexus cookies
   cookies <- decrpytChromeCookies(netid)
 
