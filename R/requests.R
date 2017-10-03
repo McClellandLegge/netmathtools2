@@ -153,6 +153,17 @@ getStudents <- function(handle, net_id) {
   students_detail_ls <- lapply(students_ls, netmathtools2::extractStudent, handle = handle)
   students_detail    <- data.table::rbindlist(students_detail_ls, fill = TRUE)
 
+  orientation_dates_utc <- as.POSIXct(
+    x      = students_detail$orientation_date,
+    tz     = "UTC",
+    format = "%Y-%m-%dT%H:%M:%OSZ"
+  )
+
+  students_detail$orientation_date <- as.Date(as.POSIXlt(
+    x  = orientation_dates_utc,
+    tz = "America/Chicago"
+  ))
+
   return(students_detail)
 }
 

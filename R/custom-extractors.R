@@ -142,6 +142,7 @@ extractStudent <- function(student, handle) {
       `id` = id,
       student[ix],
       student[["name"]],
+      orientation_date   = student[["courseOrientation"]][["date"]],
       mathable_course_id = mathable_course_id,
       timeline           = timeline,
       has_proctor        = has_proctor
