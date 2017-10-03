@@ -1,3 +1,40 @@
+
+#' Request Student's Ticket Threads
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param netId Student's netId
+#' @param page Default \code{1}, the page of results to request
+#'
+#' @return A JSON list
+#' @export
+getTicketList <- function(handle, student_netid, page = 1) {
+  conversations <- netmathtools2::getRequest(
+    handle        = h,
+    route         = "cerb/tickets",
+    page          = page,
+    status        = "All",
+    student_netId = student_netid
+  )
+
+  return(conversations)
+}
+
+#' Request a Specific Student Ticket
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param ticket_id The unique ticket_id of the
+#'
+#' @return A JSON list
+#' @export
+getTicketMessages <- function(handle, ticket_id) {
+  ticket <- netmathtools2::getRequest(
+    handle = h,
+    route  = file.path("cerb/tickets", ticket_id, "messages")
+  )
+
+  return(ticket)
+}
+
 #' Get Students' Progress
 #'
 #' @param handle An active session established with \link{composeNexusHandle}
@@ -29,8 +66,8 @@ getStudentsProgress <- function(handle, students) {
     student    <- students_dt[student_id == id]
     progress_ls[[student_id]] <- netmathtools2::extractStudentProgress(
       notebooks      = all_notebooks[[student_id]],
-      course_id      = student$mathableCourseId,
-      days_left      = student$endDays
+      course_id      = student$mathable_course_id,
+      days_left      = student$end_days
     )
   }
 
@@ -40,16 +77,17 @@ getStudentsProgress <- function(handle, students) {
   student_progress[, `:=`(
     tryits_behind  = expected_complete - completed_assignments,
     lessons_behind = should_lesson - at_lesson,
-    current_pace   = completed_assignments / startDays
+    current_pace   = completed_assignments / start_days
   )]
 
-  student_progress[completed_assignments > 0L, current_pace_interp := currentPaceCompose(current_pace)]
+  student_progress[completed_assignments > 0L,
+                   current_pace_interp := currentPaceCompose(current_pace)]
 
-  student_progress[endDays > 0L, `:=`(
-    needed_pace = (total_assignments - completed_assignments) / endDays
+  student_progress[end_days > 0L, `:=`(
+    needed_pace = (total_assignments - completed_assignments) / end_days
   )]
 
-  student_progress[endDays > 0L, `:=`(
+  student_progress[end_days > 0L, `:=`(
     needed_pace_interp = needPaceCompose(needed_pace)
   )]
 
@@ -92,23 +130,23 @@ getGrades <- function(handle, student_id) {
 #' Get a Mentor's Students
 #'
 #' @param handle An active session established with \link{composeNexusHandle}
-#' @param netid A character string
+#' @param net_id A character string
 #'
 #' @return A \code{\link[data.table]{data.table}}
 #' @export
 #' @import data.table
-getStudents <- function(handle, netid) {
+getStudents <- function(handle, net_id) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("`data.table` needed for this function to work. Please install it.",
          call. = FALSE)
   }
 
-  students_ls <- getRequest(
+  students_ls <- netmathtools2::getRequest(
     handle       = handle,
     route        = "students",
     isPartner    = "false",
-    mentor.netId = netid
+    mentor.netId = net_id
   )
 
   # use a custom extractor to pull out specific information from the list
@@ -164,3 +202,4 @@ getRequest <- function(handle, route, ...) {
 
   return(content)
 }
+

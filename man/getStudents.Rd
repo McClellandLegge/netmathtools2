@@ -4,12 +4,12 @@
 \alias{getStudents}
 \title{Get a Mentor's Students}
 \usage{
-getStudents(handle, netid)
+getStudents(handle, net_id)
 }
 \arguments{
 \item{handle}{An active session established with \link{composeNexusHandle}}
 
-\item{netid}{A character string}
+\item{net_id}{A character string}
 }
 \value{
 A \code{\link[data.table]{data.table}}

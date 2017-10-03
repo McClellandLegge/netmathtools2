@@ -134,7 +134,7 @@ extractStudent <- function(student, handle) {
   # select some non-array fields
   cstudent_names <- names(student)
   ix <- which(cstudent_names %in% c("netId", "course", "status", "startDate",
-                                    "endDate", "endDays", "startDays"))
+                                    "endDate", "endDays", "startDays", "email"))
 
   # combine with some nested lists and convert to data.table
   student_profile <- data.table::as.data.table(
@@ -142,16 +142,34 @@ extractStudent <- function(student, handle) {
       `id` = id,
       student[ix],
       student[["name"]],
-      mathableCourseId = mathable_course_id,
-      timeline         = timeline,
-      has_proctor      = has_proctor
+      mathable_course_id = mathable_course_id,
+      timeline           = timeline,
+      has_proctor        = has_proctor
     )
   )
 
+  # rename for consistency
+  data.table::setnames(student_profile,
+     c("netId", "startDate", "endDate", "endDays", "startDays"),
+     c("student_netid", "start_date", "end_date", "end_days", "start_days")
+  )
+
+  # extract the latest email for the student
+  last_email_date <- netmathtools2::extractLatestEmailDate(
+    handle = handle,
+    student_netid = student_profile$student_netid
+  )
+
+  # set latest email and days since
+  student_profile[, `:=`(
+    last_email_date = last_email_date,
+    days_last_email = as.numeric(difftime(Sys.Date(), last_email_date, units = "days"))
+  )]
+
   # set R date/time types
   student_profile[, `:=`(
-    startDate = as.Date(startDate),
-    endDate   = as.Date(endDate)
+    start_date = as.Date(start_date),
+    end_date   = as.Date(end_date)
   )]
 
   return(student_profile)
@@ -185,3 +203,57 @@ extractAssignment <- function(assignment) {
   return(assignment_dt)
 }
 
+
+#' Extract the Latest Email From Student
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param student_netid A student's NetId
+#'
+#' @return A Date type object
+#' @export
+extractLatestEmailDate <- function(handle, student_netid) {
+
+  page <- 1
+  while (TRUE) {
+
+    # get all the conversation tickets on the first page
+    conversations <- netmathtools2::getTicketList(handle, student_netid, page = page)
+
+    # if there are no conversations on this page then we've reached the end
+    # and there are no tickets from the student
+    if (conversations$count == 0L) {
+      latest_msg_date <- NA
+      break
+    }
+
+    # grab the conversation ids
+    convo_ids <- sapply(conversations[["results"]], `[[`, "id", USE.NAMES = FALSE)
+
+    # request the tickets, which include all of the messages
+    convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, handle = handle)
+
+    # combine the messages, we only care about the date, not convo ownership
+    all_msg <- unlist(lapply(convo_msgs, `[[`, "results"), recursive = FALSE)
+
+    # filter the inbound messages, we want when a student has last emailed
+    inbound_msg <- Filter(function(msg) msg$is_outgoing == 0, all_msg)
+
+    # if there are no inbound emails from the convos on this page, go to the next
+    if (length(inbound_msg) == 0L) {
+      page <- page + 1
+      next
+    }
+
+    # extract the create date as a raw char
+    char_dates <- sapply(inbound_msg, function(msg) msg$headers$date)
+
+    # convert to UTC
+    msg_dates <- as.POSIXct(char_dates, tz = "UTC", format = "%a, %d %b %Y %T %z")
+
+    # calculate the latest date and exit
+    latest_msg_date <- as.Date(max(msg_dates))
+    break
+  }
+
+  return(latest_msg_date)
+}
