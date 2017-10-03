@@ -155,15 +155,16 @@ extractStudent <- function(student, handle) {
   )
 
   # extract the latest email for the student
-  last_email_date <- netmathtools2::extractLatestEmailDate(
+  latest_emails <- netmathtools2::extractLatestEmailDate(
     handle = handle,
     student_netid = student_profile$student_netid
   )
 
-  # set latest email and days since
+  # set latest email/emailed and days since
+  student_profile[, (names(latest_emails)) := as.list(latest_emails)]
   student_profile[, `:=`(
-    last_email_date = last_email_date,
-    days_last_email = as.numeric(difftime(Sys.Date(), last_email_date, units = "days"))
+    days_last_mentor_email  = as.numeric(difftime(Sys.Date(), last_mentor_email, units = "days")),
+    days_last_student_email = as.numeric(difftime(Sys.Date(), last_student_email, units = "days"))
   )]
 
   # set R date/time types
@@ -213,7 +214,10 @@ extractAssignment <- function(assignment) {
 #' @export
 extractLatestEmailDate <- function(handle, student_netid) {
 
-  page <- 1
+  page               <- 1
+  look_outbound      <- TRUE
+  latest_msg_date    <- NA
+  latest_mentor_date <- NA
   while (TRUE) {
 
     # get all the conversation tickets on the first page
@@ -222,7 +226,6 @@ extractLatestEmailDate <- function(handle, student_netid) {
     # if there are no conversations on this page then we've reached the end
     # and there are no tickets from the student
     if (conversations$count == 0L) {
-      latest_msg_date <- NA
       break
     }
 
@@ -238,22 +241,43 @@ extractLatestEmailDate <- function(handle, student_netid) {
     # filter the inbound messages, we want when a student has last emailed
     inbound_msg <- Filter(function(msg) msg$is_outgoing == 0, all_msg)
 
+    # fileter the outbound messages to find when a student was last emailed
+    outbound_msg <- Filter(function(msg) msg$is_outgoing == 1, all_msg)
+
+    # look for outbound messages, but don't break -- we're
+    if (length(outbound_msg) > 0 & look_outbound == TRUE) {
+      latest_mentor_date <- extractLatestDate(outbound_msg)
+      look_outbound <- FALSE
+    }
+
     # if there are no inbound emails from the convos on this page, go to the next
     if (length(inbound_msg) == 0L) {
       page <- page + 1
       next
     }
 
-    # extract the create date as a raw char
-    char_dates <- sapply(inbound_msg, function(msg) msg$headers$date)
-
-    # convert to UTC
-    msg_dates <- as.POSIXct(char_dates, tz = "UTC", format = "%a, %d %b %Y %T %z")
-
-    # calculate the latest date and exit
-    latest_msg_date <- as.Date(max(msg_dates))
+    latest_msg_date <- extractLatestDate(inbound_msg)
     break
   }
+
+  message_dates <- c("last_mentor_email"  = latest_mentor_date,
+                     "last_student_email" = latest_msg_date)
+
+  return(message_dates)
+}
+
+extractLatestDate <- function(messages) {
+  # extract the create date as a raw char
+  char_dates <- sapply(messages, function(msg) msg$headers$date)
+
+  # convert to UTC
+  msg_dates <- as.POSIXct(char_dates, tz = "UTC", format = "%a, %d %b %Y %T %z")
+
+  # local time
+  local_msg_dates <- as.POSIXlt(msg_dates, tz = "America/Chicago")
+
+  # calculate the latest date and exit
+  latest_msg_date <- as.Date(max(local_msg_dates))
 
   return(latest_msg_date)
 }
