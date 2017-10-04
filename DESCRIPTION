@@ -15,4 +15,5 @@ Imports: data.table,
     curl,
     DBI,
     RSQLite,
-    dplyr
+    dplyr,
+    brew
