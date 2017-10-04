@@ -45,7 +45,7 @@ decrpytChromeCookies <- function(netid) {
   unlink(".\\Cookies")
 
   # close the connection
-  DBI::dbConnect(con)
+  DBI::dbDisconnect(con)
 
   # if there are no rows then there are no active/cached cookies
   if (nrow(cookies) == 0L) {
