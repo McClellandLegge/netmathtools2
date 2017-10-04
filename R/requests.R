@@ -9,7 +9,7 @@
 #' @export
 getTicketList <- function(handle, student_netid, page = 1) {
   conversations <- netmathtools2::getRequest(
-    handle        = h,
+    handle        = handle,
     route         = "cerb/tickets",
     page          = page,
     status        = "All",
@@ -28,7 +28,7 @@ getTicketList <- function(handle, student_netid, page = 1) {
 #' @export
 getTicketMessages <- function(handle, ticket_id) {
   ticket <- netmathtools2::getRequest(
-    handle = h,
+    handle = handle,
     route  = file.path("cerb/tickets", ticket_id, "messages")
   )
 
