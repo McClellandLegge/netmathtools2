@@ -1,11 +1,12 @@
 # Creation Credit: https://gist.github.com/DakuTree/428e5b737306937628f2944fbfdc4ffc
 from os import getenv
+from getpass import getuser
 from shutil import copyfile
 import sqlite3
 import win32crypt # https://sourceforge.net/projects/pywin32/
 
 # Copy Cookies to current folder
-copyfile("C:/Documents and Settings/msmck/Local Settings/Application Data/Google/Chrome/User Data/Default/Cookies", './Cookies')
+copyfile("C:/Documents and Settings/" + getuser() + "/Local Settings/Application Data/Google/Chrome/User Data/Default/Cookies", './Cookies')
 
 # Connect to the Database
 conn = sqlite3.connect('./Cookies')
