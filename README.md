@@ -4,6 +4,8 @@
 
 ## Installation:
 
+Windows 7/8/10 only.
+
 ```R
 devtools::install_github("McClellandLegge/netmathtools2")
 ```
