@@ -1,0 +1,262 @@
+day,lesson_num,tryit_name
+1,1,Try It 01
+2,1,Try It 01
+3,1,Try It 02
+4,1,Try It 02
+5,1,Try It 03
+6,1,Try It 03
+7,1,Try It 04
+8,1,Try It 04
+9,1,Try It 05
+10,1,Try It 05
+11,1,Try It 06
+12,1,Try It 06
+13,1,Try It 07
+14,1,Try It 07
+15,1,Try It 08
+16,1,Try It 08
+17,1,Try It 08
+18,1,Literacy
+19,1,Literacy
+20,1,Literacy
+21,1,Literacy
+22,1,Literacy
+23,2,Try It 01
+24,2,Try It 01
+25,2,Try It 02
+26,2,Try It 02
+27,2,Try It 03
+28,2,Try It 03
+29,2,Try It 04
+30,2,Try It 04
+31,2,Try It 05
+32,2,Try It 05
+33,2,Try It 06
+34,2,Try It 06
+35,2,Try It 07
+36,2,Try It 07
+37,2,Try It 08
+38,2,Try It 08
+39,2,Try It 09
+40,2,Try It 09
+41,2,Try It 10
+42,2,Try It 10
+43,2,Try It 11
+44,2,Try It 11
+45,2,Try It 12
+46,2,Try It 12
+47,2,Try It 13
+48,2,Try It 13
+49,2,Try It 13
+50,2,Try It 13
+51,2,Literacy
+52,2,Literacy
+53,2,Literacy
+54,2,Literacy
+55,3,Try It 01
+56,3,Try It 01
+57,3,Try It 02
+58,3,Try It 02
+59,3,Try It 03
+60,3,Try It 03
+61,3,Try It 04
+62,3,Try It 04
+63,3,Try It 05
+64,3,Try It 05
+65,3,Try It 06
+66,3,Try It 06
+67,3,Try It 07
+68,3,Try It 07
+69,3,Try It 08
+70,3,Try It 08
+71,3,Try It 08
+72,3,Literacy
+73,3,Literacy
+74,3,Literacy
+75,3,Literacy
+76,4,Try It 01
+77,4,Try It 01
+78,4,Try It 02
+79,4,Try It 02
+80,4,Try It 03
+81,4,Try It 03
+82,4,Try It 04
+83,4,Try It 04
+84,4,Try It 04
+85,4,Try It 05
+86,4,Try It 05
+87,4,Try It 05
+88,4,Try It 05
+89,4,Try It 05
+90,4,Try It 05
+91,4,Try It 05
+92,5,Try It 01
+93,5,Try It 01
+94,5,Try It 02
+95,5,Try It 02
+96,5,Try It 03
+97,5,Try It 03
+98,5,Try It 04
+99,5,Try It 04
+100,5,Try It 05
+101,5,Try It 05
+102,5,Try It 06
+103,5,Try It 06
+104,5,Try It 07
+105,5,Try It 07
+106,5,Try It 08
+107,5,Try It 08
+108,5,Try It 08
+109,5,Try It 09
+110,5,Try It 09
+111,5,Try It 09
+112,5,Literacy
+113,5,Literacy
+114,5,Literacy
+115,5,Literacy
+116,5,Literacy
+117,5,Literacy
+118,6,Try It 01
+119,6,Try It 01
+120,6,Try It 01
+121,6,Try It 02
+122,6,Try It 02
+123,6,Try It 02
+124,6,Try It 03
+125,6,Try It 03
+126,6,Try It 03
+127,6,Try It 04
+128,6,Try It 04
+129,6,Try It 04
+130,6,Try It 05
+131,6,Try It 05
+132,6,Try It 05
+133,6,Try It 06
+134,6,Try It 06
+135,6,Try It 06
+136,6,Try It 07
+137,6,Try It 07
+138,6,Try It 07
+139,6,Try It 08
+140,6,Try It 08
+141,6,Try It 08
+142,6,Try It 09
+143,6,Try It 09
+144,6,Try It 09
+145,6,Try It 10
+146,6,Try It 10
+147,6,Try It 10
+148,6,Literacy
+149,6,Literacy
+150,6,Literacy
+151,6,Literacy
+152,6,Literacy
+153,6,Literacy
+154,7,Try It 01
+155,7,Try It 01
+156,7,Try It 01
+157,7,Try It 02
+158,7,Try It 02
+159,7,Try It 02
+160,7,Try It 03
+161,7,Try It 03
+162,7,Try It 03
+163,7,Try It 04
+164,7,Try It 04
+165,7,Try It 04
+166,7,Try It 05
+167,7,Try It 05
+168,7,Try It 05
+169,7,Try It 06
+170,7,Try It 06
+171,7,Try It 06
+172,7,Try It 06
+173,7,Try It 06
+174,7,Try It 07
+175,7,Try It 07
+176,7,Try It 07
+177,7,Try It 07
+178,8,Try It 01
+179,8,Try It 01
+180,8,Try It 01
+181,8,Try It 02
+182,8,Try It 02
+183,8,Try It 02
+184,8,Try It 03
+185,8,Try It 03
+186,8,Try It 03
+187,8,Try It 04
+188,8,Try It 04
+189,8,Try It 04
+190,8,Try It 04
+191,8,Try It 05
+192,8,Try It 05
+193,8,Try It 05
+194,8,Try It 05
+195,8,Try It 06
+196,8,Try It 06
+197,8,Try It 06
+198,8,Try It 06
+199,8,Try It 07
+200,8,Try It 07
+201,8,Try It 07
+202,8,Try It 07
+203,8,Try It 08
+204,8,Try It 08
+205,8,Try It 08
+206,8,Try It 08
+207,8,Try It 08
+208,8,Try It 08
+209,8,Literacy
+210,8,Literacy
+211,8,Literacy
+212,8,Literacy
+213,9,Try It 01
+214,9,Try It 01
+215,9,Try It 01
+216,9,Try It 02
+217,9,Try It 02
+218,9,Try It 02
+219,9,Try It 03
+220,9,Try It 03
+221,9,Try It 03
+222,9,Try It 04
+223,9,Try It 04
+224,9,Try It 04
+225,9,Try It 05
+226,9,Try It 05
+227,9,Try It 05
+228,9,Try It 06
+229,9,Try It 06
+230,9,Try It 06
+231,9,Try It 07
+232,9,Try It 07
+233,9,Try It 07
+234,9,Try It 08
+235,9,Try It 08
+236,9,Try It 08
+237,9,Try It 09
+238,9,Try It 09
+239,9,Try It 09
+240,9,Literacy
+241,9,Literacy
+242,9,Literacy
+243,9,Literacy
+244,9,Literacy
+245,10,Try It 01
+246,10,Try It 01
+247,10,Try It 02
+248,10,Try It 02
+249,10,Try It 03
+250,10,Try It 03
+251,10,Try It 03
+252,10,Try It 03
+253,10,Try It 03
+254,10,Try It 03
+255,10,Try It 03
+256,10,Try It 03
+257,10,Try It 03
+258,10,Try It 03
+259,10,Try It 03
+260,10,Try It 03
+261,10,Try It 03

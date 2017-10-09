@@ -1,6 +1,7 @@
 schedules <- list(
   `MM461` = data.table::fread("data-raw/netmath461.csv")
   , `MM461EGR` = data.table::fread("data-raw/netmath461EGR.csv")
+  , `MM461HS` = data.table::fread("data-raw/netmath461HS.csv")
 )
 
 status <- data.table::data.table(

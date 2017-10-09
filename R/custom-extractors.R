@@ -39,7 +39,7 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 
   # find the schedule
   if (isTRUE(is_highschool)) {
-    schedule <- NULL
+    schedule <- netmathtools2:::schedules$MM461HS
   } else if(isTRUE(is_egr)) {
     schedule <- netmathtools2:::schedules$MM461EGR
   } else {
