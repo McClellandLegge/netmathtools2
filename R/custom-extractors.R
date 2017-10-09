@@ -200,7 +200,7 @@ extractAssignment <- function(assignment) {
   )
 
   # indicator for completeness
-  assignment_dt[, tryit_complete := tryit_status %in% c("Graded", "TryAgain")]
+  assignment_dt[, tryit_complete := tryit_status %in% c("Graded", "TryAgain", "HandedIn")]
 
   return(assignment_dt)
 }
