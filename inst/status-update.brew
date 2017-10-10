@@ -1,16 +1,20 @@
 <%
-update_template <- system.file(package = "netmathtools2", "status-update.brew")
 ooc_template    <- system.file(package = "netmathtools2", "out-of-contact.brew")
+opp_template    <- system.file(package = "netmathtools2", "on-pace-praise.brew")
+
+plural_enddays <- ifelse(end_days != 1, "s", "")
+plural_daysbehind <- ifelse(days_behind != 1, "s", "")
+plural_tryitsbehind <- ifelse(tryits_behind != 1, "s", "")
+plural_tryitleft <- ifelse(total_assignments - completed_assignments != 1, "s", "")
 %>
 
 Hi <%= first %>,
 
+<%= if(days_behind <= 0L) brew::brew(opp_template) -%>
 <%= if(days_last_student_email >= 10) brew::brew(ooc_template) -%>
-You have <%= end_days %> days left in your course which ends on <%= format(end_date, "%b %d, %Y") %>.
+You have <%= end_days %> day<%= plural_enddays%> left in your course which ends on <%= format(end_date, "%b %d, %Y") %>. You have completed <%= completed_assignments %> Try It and Literacy assignments and <%= current_pace_interp %>, this puts you <%= days_behind %> day<%= plural_daysbehind %> and <%= tryits_behind %> assignment<%= plural_tryitsbehind %> behind the recommended pace.
 
-You have completed <%= completed_assignments %> Try It and Literacy assignments and <%= current_pace_interp %>, this puts you <%= days_behind %> days and <%= tryits_behind %> assignments behind the recommended pace.
-
-In order to finish the remaining <%= total_assignments - completed_assignments %> assignments before your course end date you <%= needed_pace_interp %>.
+In order to finish the remaining <%= total_assignments - completed_assignments %> assignment<%= plural_tryitleft %> before your course end date you <%= needed_pace_interp %>.
 
 Thanks,
 Mac

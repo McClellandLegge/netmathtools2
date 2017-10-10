@@ -96,13 +96,14 @@ getStudentsProgress <- function(handle, students) {
 currentPaceCompose <- function(current_pace, interval = 0.5) {
   cp_long <- round(1 / current_pace / interval) * interval
   cp_short <- round(current_pace / interval) * interval
+  short_plural <- sapply(cp_short, function(x) ifelse(x != 1, "s", ""), USE.NAMES = FALSE)
   pace_interp <- sapply(current_pace, function(x) {
     if (round(x, 4) == 0) {
       msg <- "have not submitted any Try Its"
     } else if (x < 1) {
       msg <- paste("have been submitting a Try It every", cp_long, "days")
     } else {
-      msg <- paste("have been submitting", cp_short, "Try It(s) a day")
+      msg <- paste0("have been submitting ", cp_short, " Try It", short_plural, " a day")
     }
     return(msg)
   })
@@ -111,7 +112,8 @@ currentPaceCompose <- function(current_pace, interval = 0.5) {
 
 needPaceCompose <- function(needed_pace, interval = 0.5) {
   np <- ceiling(needed_pace / interval) * interval
-  msg <- paste("need to submit an average of", np, "Try It(s) a day")
+  np_plural <- sapply(np, function(x) ifelse(x != 1, "s", ""), USE.NAMES = FALSE)
+  msg <- paste0("need to submit an average of ", np, " Try It", np_plural, " a day")
   return(msg)
 }
 

@@ -1,0 +1,11 @@
+<%
+if (days_behind == 0) {
+  msg <- paste0("right on schedule")
+} else {
+  plural_tryits <- ifelse(abs(tryits_behind) != 1, "s", "")
+  plural_days <- ifelse(abs(days_behind) != 1, "s", "")
+  msg <- paste0(abs(days_behind), " day", plural_days, " and ", abs(tryits_behind), " Try It", plural_tryits, " ahead of schedule")
+}
+%>
+You're <%= msg %> -- great job! You're putting yourself in a great position to succeed in the course, keep it up!
+
