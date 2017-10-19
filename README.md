@@ -58,6 +58,6 @@ customized_student_prog <- student_prog[, .(
 netmathtools2::chartProgress(customized_student_prog)
 ```
 
-![alt text](www/app-output.png)
+![example view of student progress table](www/app-output.png)
 
 
