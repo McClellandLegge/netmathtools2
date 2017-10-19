@@ -22,6 +22,7 @@ Additionally:
 Must log into Nexus with Chrome! The package automatically uses these cookies.
 
 ```R
+library("data.table")
 
 my_netid     <- "mkemp6"
 
