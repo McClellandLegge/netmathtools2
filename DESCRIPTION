@@ -1,7 +1,7 @@
 Package: netmathtools2
 Type: Package
 Title: Automated NetMath Student Tracker
-Version: 0.6.0
+Version: 0.7.0
 Authors@R: utils::person("McClelland", "Legge", email = "McClelland.Legge@gmail.com", role = c("aut", "cre"))
 Description: The package helps automate the calculation of a student's status
     in their course as compared to established schedules and highlights any
@@ -18,3 +18,6 @@ Imports: data.table,
     dplyr,
     brew,
     dbplyr
+Suggests: shiny,
+    DT,
+    tools
