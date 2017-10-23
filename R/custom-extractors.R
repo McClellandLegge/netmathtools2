@@ -127,7 +127,9 @@ extractStudent <- function(student, handle) {
   # some Mathable course ids do not have this pre-pended which results in
   # no matches down the road
   mathable_course_id <- student[["mathable"]][["courseId"]]
-  if (!grepl("^studentcourserecords\\/", mathable_course_id)) {
+  mathable_course_id <- ifelse(is.null(mathable_course_id), NA, mathable_course_id)
+
+  if (!is.na(mathable_course_id) && !grepl("^studentcourserecords\\/", mathable_course_id)) {
     mathable_course_id <- paste0("studentcourserecords/", mathable_course_id)
   }
 

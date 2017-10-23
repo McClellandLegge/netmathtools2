@@ -64,8 +64,14 @@ getStudentsProgress <- function(handle, students) {
   for (k in seq_along(all_notebooks)) {
     student_id <- student_ids[k]
     student    <- students_dt[student_id == id]
+    notebooks  <- all_notebooks[[student_id]]
+
+    if (length(notebooks) == 0) {
+      next
+    }
+
     progress_ls[[student_id]] <- netmathtools2::extractStudentProgress(
-      notebooks      = all_notebooks[[student_id]],
+      notebooks      = notebooks,
       course_id      = student$mathable_course_id,
       days_left      = student$end_days
     )
@@ -74,19 +80,19 @@ getStudentsProgress <- function(handle, students) {
   progress <- data.table::rbindlist(progress_ls, idcol = "id")
   student_progress <- merge(progress, students_dt, by = "id", all.y = TRUE)
 
-  student_progress[, `:=`(
+  student_progress[!is.na(mathable_course_id), `:=`(
     tryits_behind  = expected_complete - completed_assignments,
     lessons_behind = should_lesson - at_lesson,
     current_pace   = completed_assignments / start_days
   )]
 
-  student_progress[, current_pace_interp := sapply(current_pace, currentPaceCompose)]
+  student_progress[!is.na(mathable_course_id), current_pace_interp := sapply(current_pace, currentPaceCompose)]
 
-  student_progress[end_days > 0L, `:=`(
+  student_progress[end_days > 0L & !is.na(mathable_course_id), `:=`(
     needed_pace = (total_assignments - completed_assignments) / end_days
   )]
 
-  student_progress[end_days > 0L, `:=`(
+  student_progress[end_days > 0L & !is.na(mathable_course_id), `:=`(
     needed_pace_interp = needPaceCompose(needed_pace)
   )]
 
