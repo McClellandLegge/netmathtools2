@@ -3,6 +3,8 @@
 #' @param students A data.table, the output of \link{getStudentsProgress}
 #'
 #' @export
+#' @importFrom DT %>%
+#' @importFrom DT formatStyle
 chartProgress <- function(students) {
 
   if (!requireNamespace("tools", quietly = TRUE)) {
@@ -34,7 +36,7 @@ chartProgress <- function(students) {
   email_colors  <- makeEmailCols(length(email_breaks) + 1)
 
   # the UI is just the output of the datatable
-  ui <- fluidPage(dataTableOutput("students"))
+  ui <- shiny::fluidPage(DT::dataTableOutput("students"))
 
   # determine what the indicies are of the sort columns, subtract 1
   # because DT is zero-indexed
@@ -43,8 +45,8 @@ chartProgress <- function(students) {
 
   # the server just contains the datatable with a bunch of options
   server <- function(input, output) {
-    output$students <- renderDataTable({
-      datatable(org_prog
+    output$students <- DT::renderDataTable({
+      DT::datatable(org_prog
                 , rownames = FALSE
                 , colnames = pretty_names
                 , extensions = c('FixedHeader', 'FixedColumns')
@@ -59,28 +61,28 @@ chartProgress <- function(students) {
                 )) %>%
         formatStyle(
           'end_days',
-          background = styleColorBar(c(0, 112), 'steelblue'),
+          background = DT::styleColorBar(c(0, 112), 'steelblue'),
           backgroundSize = '100% 90%',
           backgroundRepeat = 'no-repeat',
           backgroundPosition = 'center'
         ) %>%
         formatStyle(
           'days_behind',
-          backgroundColor = styleInterval(
+          backgroundColor = DT::styleInterval(
             status_breaks,
             status_colors
           )
         ) %>%
         formatStyle(
           'days_last_mentor_email',
-          backgroundColor = styleInterval(
+          backgroundColor = DT::styleInterval(
             email_breaks,
             email_colors
           )
         ) %>%
         formatStyle(
           'days_last_student_email',
-          backgroundColor = styleInterval(
+          backgroundColor = DT::styleInterval(
             email_breaks,
             email_colors
           )
