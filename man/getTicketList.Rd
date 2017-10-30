@@ -9,9 +9,9 @@ getTicketList(handle, student_netid, page = 1)
 \arguments{
 \item{handle}{An active session established with \link{composeNexusHandle}}
 
-\item{page}{Default \code{1}, the page of results to request}
+\item{student_netid}{Student's netId}
 
-\item{netId}{Student's netId}
+\item{page}{Default \code{1}, the page of results to request}
 }
 \value{
 A JSON list

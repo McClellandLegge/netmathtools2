@@ -8,6 +8,7 @@ Description: The package helps automate the calculation of a student's status
     administrative tasks they have yet to complete.
 License: file LICENSE
 Encoding: UTF-8
+Depends: R (>= 2.10)
 LazyData: true
 RoxygenNote: 6.0.1
 Imports: data.table,

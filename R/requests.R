@@ -2,7 +2,7 @@
 #' Request Student's Ticket Threads
 #'
 #' @param handle An active session established with \link{composeNexusHandle}
-#' @param netId Student's netId
+#' @param student_netid Student's netId
 #' @param page Default \code{1}, the page of results to request
 #'
 #' @return A JSON list
