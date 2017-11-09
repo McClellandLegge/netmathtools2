@@ -69,7 +69,11 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
     at_schedule     <- graded_schedule[tryit_complete == TRUE]
     at_day          <- at_schedule[, max(day, 0, na.rm = TRUE)]
     should_be_day   <- should_schedule[, max(day, 0, na.rm = TRUE)]
-    days_behind     <- should_be_day - at_day
+
+    # calculate the number of days attributed to skipped assignments
+    days_skipped    <- graded_schedule[day <= at_day & tryit_complete == FALSE, .N]
+
+    days_behind     <- should_be_day - at_day + days_skipped
 
   } else {
     should_tryit    <- NA
