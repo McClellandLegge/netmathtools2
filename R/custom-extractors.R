@@ -38,12 +38,15 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
   is_egr        <- grepl("_egr_", course_id)
 
   # find the schedule
-  if (isTRUE(is_highschool)) {
-    schedule <- netmathtools2:::schedules$MM461HS
-  } else if(isTRUE(is_egr)) {
-    schedule <- netmathtools2:::schedules$MM461EGR
+  if (is_highschool == TRUE) {
+    schedule    <- netmathtools2:::schedules$MM461HS
+    course_type <- "HS"
+  } else if(is_eg == TRUE) {
+    schedule    <- netmathtools2:::schedules$MM461EGR
+    course_type <- "EGR"
   } else {
-    schedule <- netmathtools2:::schedules$MM461
+    schedule    <- netmathtools2:::schedules$MM461
+    course_type <- "REG"
   }
 
   # if days left is less than 0 then they probably have an extension pending
@@ -84,7 +87,8 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
     expected_complete     = should_tryit,
     should_lesson         = should_lesson,
     at_lesson             = at_lesson,
-    days_behind           = days_behind
+    days_behind           = days_behind,
+    course_type           = course_type
   )
 
   return(progress_summary)
