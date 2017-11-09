@@ -51,8 +51,9 @@ customized_student_prog <- student_prog[, .(
   , lessons_behind
   , current_pace_interp
   , needed_pace_interp
-  , completed_assignments)
-  ]
+  , completed_assignments
+  , exams
+  )]
 
 # run a shiny app displaying an interactive DataTableJS
 netmathtools2::chartProgress(customized_student_prog)
