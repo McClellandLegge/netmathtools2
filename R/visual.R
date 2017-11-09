@@ -45,8 +45,9 @@ chartProgress <- function(students) {
   server <- function(input, output) {
     output$students <- DT::renderDataTable({
       dt <- DT::datatable(students
-                , rownames = FALSE
-                , colnames = pretty_names
+                , rownames   = FALSE
+                , escape     = FALSE
+                , colnames   = pretty_names
                 , extensions = c('FixedHeader', 'FixedColumns')
                 , options = list(
                   pageLength = 50
