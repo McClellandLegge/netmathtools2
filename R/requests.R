@@ -146,7 +146,9 @@ currentPaceCompose <- function(current_pace, interval = 0.5) {
   cp_short <- round(current_pace / interval) * interval
   short_plural <- sapply(cp_short, function(x) ifelse(x != 1, "s", ""), USE.NAMES = FALSE)
   pace_interp <- sapply(current_pace, function(x) {
-    if (round(x, 4) == 0) {
+    if (is.nan(x)) {
+      msg <- "Not Applicable"
+    } else if (round(x, 4) == 0) {
       msg <- "have not submitted any Try Its"
     } else if (x < 1) {
       msg <- paste("have been submitting a Try It every", cp_long, "days")

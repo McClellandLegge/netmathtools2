@@ -63,7 +63,7 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
     should_schedule <- schedule[day <= course_days - days_left]
 
     should_day      <- should_schedule[, .(lesson_num, tryit_name)]
-    should_lesson   <- max(should_day$lesson_num)
+    should_lesson   <- ifelse(nrow(should_day) > 0L, max(should_day$lesson_num), 0L)
     should_tryit    <- nrow(unique(should_day))
 
     at_schedule     <- graded_schedule[tryit_complete == TRUE]
