@@ -95,20 +95,24 @@ getStudentsProgress <- function(handle, students) {
   # filter out only homeworks (throw out "Reading") and limit to the current course
   progress_ls <- list()
   student_ids <- names(all_notebooks)
-  for (k in seq_along(all_notebooks)) {
-    student_id <- student_ids[k]
-    student    <- students_dt[student_id == id]
-    notebooks  <- all_notebooks[[student_id]]
+  if (all(sapply(all_notebooks, length) == 0)) {
 
-    if (length(notebooks) == 0) {
-      next
+  } else {
+    for (k in seq_along(all_notebooks)) {
+      student_id <- student_ids[k]
+      student    <- students_dt[student_id == id]
+      notebooks  <- all_notebooks[[student_id]]
+
+      if (length(notebooks) == 0) {
+        next
+      }
+
+      progress_ls[[student_id]] <- netmathtools2::extractStudentProgress(
+        notebooks      = notebooks,
+        course_id      = student$mathable_course_id,
+        days_left      = student$end_days
+      )
     }
-
-    progress_ls[[student_id]] <- netmathtools2::extractStudentProgress(
-      notebooks      = notebooks,
-      course_id      = student$mathable_course_id,
-      days_left      = student$end_days
-    )
   }
 
   # merge in the exams
@@ -116,7 +120,11 @@ getStudentsProgress <- function(handle, students) {
 
   # merge in the student progress
   progress <- data.table::rbindlist(progress_ls, idcol = "id")
-  student_progress <- merge(progress, student_exam_dt, by = "id", all.y = TRUE)
+  if (nrow(progress) > 0L) {
+    student_progress <- merge(progress, student_exam_dt, by = "id", all.y = TRUE)
+  } else {
+    student_progress <- student_exam_dt
+  }
 
   # calculate the comparisons to where they should be
   student_progress[!is.na(mathable_course_id), `:=`(
@@ -146,7 +154,7 @@ currentPaceCompose <- function(current_pace, interval = 0.5) {
   cp_short <- round(current_pace / interval) * interval
   short_plural <- sapply(cp_short, function(x) ifelse(x != 1, "s", ""), USE.NAMES = FALSE)
   pace_interp <- sapply(current_pace, function(x) {
-    if (is.nan(x)) {
+    if (is.null(x) || is.nan(x) || is.na(x)) {
       msg <- "Not Applicable"
     } else if (round(x, 4) == 0) {
       msg <- "have not submitted any Try Its"
@@ -163,7 +171,17 @@ currentPaceCompose <- function(current_pace, interval = 0.5) {
 needPaceCompose <- function(needed_pace, interval = 0.5) {
   np <- ceiling(needed_pace / interval) * interval
   np_plural <- sapply(np, function(x) ifelse(x != 1, "s", ""), USE.NAMES = FALSE)
-  msg <- paste0("need to submit an average of ", np, " Try It", np_plural, " a day")
+
+  msg <- mapply(function(np, np_plural) {
+    if (is.null(np) || is.nan(np) || is.na(np)) {
+      msg <- "Not Applicable"
+    } else {
+      msg <- paste0("need to submit an average of ", np, " Try It", np_plural, " a day")
+    }
+
+    return(msg)
+  }, np, np_plural)
+
   return(msg)
 }
 
