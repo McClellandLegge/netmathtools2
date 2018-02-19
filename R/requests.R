@@ -218,7 +218,6 @@ getStudents <- function(handle, net_id) {
   students_ls <- netmathtools2::getRequest(
     handle       = handle,
     route        = "students",
-    isPartner    = "false",
     mentor.netId = net_id
   )
 
