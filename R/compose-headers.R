@@ -1,11 +1,11 @@
 #' Decrypt the Chrome Cookies for Nexus
 #'
-#' @param netid The mentor netid
+#' @param what What cookies do decrpyt
 #'
 #' @return a \code{\link[data.table]{data.table}} with the cookie names and values
 #'     along with other meta information.
 #' @importFrom dplyr %>%
-decrpytChromeCookies <- function(netid) {
+decrpytChromeCookies <- function(what) {
 
   if (!requireNamespace("DBI", quietly = TRUE)) {
     stop("`DBI` needed for this function to work. Please install it.",
@@ -37,9 +37,16 @@ decrpytChromeCookies <- function(netid) {
   con <- DBI::dbConnect(RSQLite::SQLite(), dbname = ".\\Cookies")
 
   # extract the cookie table
-  cookies <- dplyr::tbl(con, "cookies") %>%
-    dplyr::filter(host_key == "nexus.netmath.illinois.edu" & name == "sessionId") %>%
-    dplyr::collect()
+  if (what == "nexus") {
+    cookies <- dplyr::tbl(con, "cookies") %>%
+      dplyr::filter(host_key == "nexus.netmath.illinois.edu" & name == "sessionId") %>%
+      dplyr::collect()
+  } else if (what == "mathable") {
+    cookies <- dplyr::tbl(con, "cookies") %>%
+      dplyr::filter(host_key == "courseware.mathable.io") %>%
+      dplyr::collect()
+  }
+
 
   # delete the intermediate sqlite db
   unlink(".\\Cookies")
@@ -55,7 +62,7 @@ decrpytChromeCookies <- function(netid) {
   return(cookies)
 }
 
-#' Compose the Nexus  the Chrome Cookies for Nexus
+#' Compose a Nexus Curl Handle
 #'
 #' @param netid The mentor netid
 #'
@@ -73,7 +80,7 @@ composeNexusHandle <- function(netid) {
   }
 
   # extract the nexus cookies
-  cookies <- decrpytChromeCookies(netid)
+  cookies <- decrpytChromeCookies("nexus")
 
   # compose the key value pairs for the nexus request header
   nexus_cookies    <- with(cookies, paste0(name, "=", value))
@@ -91,6 +98,51 @@ composeNexusHandle <- function(netid) {
     "User-Agent"      = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36",
     "Connection"      = "keep-alive",
     "Cookie"          = nexus_cookie_str
+  )
+
+  # don't verify SSL certs
+  # TODO: figure out why this is necessary and fix if possible
+  curl::handle_setopt(h, "ssl_verifypeer" = 0L)
+
+  return(h)
+}
+
+
+#' Compose a Mathable Curl Handle
+#'
+#' @param netid The user netid
+#'
+#' @return A handle object (external pointer to the underlying curl handle).
+#' @export
+composeMathableHandle <- function(netid) {
+
+  if (!requireNamespace("curl", quietly = TRUE)) {
+    stop("`curl` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  # extract the mathable cookies
+  cookies <- decrpytChromeCookies("mathable")
+
+  # compose the key value pairs for the mathable request header
+  mathable_cookies    <- with(cookies, paste0(name, "=", value))
+  mathable_cookie_str <- paste0(mathable_cookies, collapse = ";")
+
+  # set a new handle
+  h <- curl::new_handle()
+
+  # compose the handle
+  curl::handle_setheaders(h,
+                          "DNT"              = "1",
+                          "Accept-Encoding"  = "gzip, deflate, br",
+                          "Accept-Language"  = "en-US,en;q=0.9",
+                          "Accept"           = "*/*",
+                          "User-Agent"       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36",
+                          "Connection"       = "keep-alive",
+                          "Content-Type"     = "application/json; charset=UTF-8",
+                          "Referer"          = "https://courseware.mathable.io/",
+                          "X-Requested-With" = "XMLHttpRequest",
+                          "Cookie"           = mathable_cookie_str
   )
 
   # don't verify SSL certs

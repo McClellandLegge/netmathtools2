@@ -2,7 +2,7 @@
 % Please edit documentation in R/compose-headers.R
 \name{composeNexusHandle}
 \alias{composeNexusHandle}
-\title{Compose the Nexus  the Chrome Cookies for Nexus}
+\title{Compose a Nexus Curl Handle}
 \usage{
 composeNexusHandle(netid)
 }
@@ -13,7 +13,7 @@ composeNexusHandle(netid)
 A handle object (external pointer to the underlying curl handle).
 }
 \description{
-Compose the Nexus  the Chrome Cookies for Nexus
+Compose a Nexus Curl Handle
 }
 \examples{
 \dontrun{

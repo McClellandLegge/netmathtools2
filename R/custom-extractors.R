@@ -144,7 +144,7 @@ extractStudent <- function(student, handle) {
   # select some non-array fields
   cstudent_names <- names(student)
   ix <- which(cstudent_names %in% c("netId", "course", "status", "startDate",
-                                    "endDate", "endDays", "startDays", "email"))
+                                    "endDate", "endDays", "startDays", "email", "isPartner"))
 
   # combine with some nested lists and convert to data.table
   student_profile <- data.table::as.data.table(

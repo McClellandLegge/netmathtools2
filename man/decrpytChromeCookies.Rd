@@ -4,10 +4,10 @@
 \alias{decrpytChromeCookies}
 \title{Decrypt the Chrome Cookies for Nexus}
 \usage{
-decrpytChromeCookies(netid)
+decrpytChromeCookies(what)
 }
 \arguments{
-\item{netid}{The mentor netid}
+\item{what}{What cookies do decrpyt}
 }
 \value{
 a \code{\link[data.table]{data.table}} with the cookie names and values

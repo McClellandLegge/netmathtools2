@@ -18,7 +18,9 @@ Imports: data.table,
     RSQLite,
     dplyr,
     brew,
-    dbplyr
+    dbplyr,
+    anytime,
+    purrr
 Suggests: shiny,
     DT,
     tools

@@ -247,7 +247,7 @@ getStudents <- function(handle, net_id) {
 #'
 #' @return A JSON list
 #' @export
-getRequest <- function(handle, route, ...) {
+getRequest <- function(handle, route, where = "nexus", ...) {
 
   if (!requireNamespace("curl", quietly = TRUE)) {
     stop("`curl` needed for this function to work. Please install it.",
@@ -264,9 +264,15 @@ getRequest <- function(handle, route, ...) {
   if (missing(...)) {
     arg_str <- ""
   } else {
-    arg_str <- paste0(paste0(names(args), "=", args), collapse = "&")
+    arg_str <- paste0(paste0(names(args), "=", purrr::map_chr(args, URLencode, reserved = TRUE)), collapse = "&")
   }
-  req_url <- sprintf("%s/%s?%s", netmathtools2:::api_endpoint, route, arg_str)
+
+  if (where == "nexus") {
+    endpoint <- netmathtools2:::api_endpoint
+  } else if (where == "mathable") {
+    endpoint <- netmathtools2:::mathable_endpoint
+  }
+  req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)
 
   # perform the request
   res <- curl::curl_fetch_memory(req_url, handle = handle)
@@ -284,5 +290,67 @@ getRequest <- function(handle, route, ...) {
     )
 
   return(content)
+}
+
+
+#' Get the specifics of a notebook
+#'
+#' @param handle Valid Mathable curl handle
+#' @param student_netid Student's Id
+#' @param notebook_id Mathable Notebook Id
+#'
+#' @return
+#' @export
+getMathableNotebook <- function(handle, student_netid, notebook_id) {
+
+  prefix <- ifelse(grepl("_HS_", notebook_id, ignore.case = TRUE), "NetmathPHS", "UIUC")
+
+  if (student_netid %in% c("rant2")) {
+    prefix <- "UIUC"
+  }
+
+  res <- netmathtools2::getRequest(
+      handle   = handle
+    , where    = "mathable"
+    , route    = "GetGradebookNotebook"
+    , notebook = paste0('"', notebook_id, '"')
+    , student  = paste0('"Users/', prefix, '_', student_netid, '"')
+  )
+
+  if (is.null(res$d$Results)) {
+    warning(sprintf("Notebook %s for %s doesn't exist", notebook_id, student_netid))
+    return(NULL)
+  }
+
+  if (length(res$d$Results) == 0) {
+    return(NULL)
+  }
+
+  return(res$d$Results[[1]])
+}
+
+
+#' Get Mathable Course Information
+#'
+#' @param netid Mentor NetID
+#' @param student_courseid Student's Mathable Course ID
+#'
+#' @return
+#' @export
+getMathableCourse <- function(netid, student_courseid) {
+  h <- composeMathableHandle(netid)
+
+  res <- netmathtools2::getRequest(
+      handle   = h
+    , where    = "mathable"
+    , route    = "GetCourse"
+    , courseId = paste0('"', student_courseid, '"')
+  )
+
+  return(res)
+}
+
+
+getAllMathable <- function(netid, students) {
 }
 
