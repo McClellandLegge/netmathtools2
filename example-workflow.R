@@ -3,6 +3,7 @@ library("data.table")
 library("plotly")
 
 netid <- "mkemp6"
+dobw <- FALSE
 
 tries <- 0L
 students <- NULL
@@ -48,54 +49,48 @@ customized_student_prog <- student_prog[, .(
   , end_date
 )]
 
-
 chartProgress(customized_student_prog)
 
 
-# Mentor Activity ---------------------------------------------------------
+if (dobw == TRUE) {
 
+  # Mentor Activity ---------------------------------------------------------
 
+  emails     <- getMentorActivity(h, students)
+  all_emails <- unlist(emails, use.names = FALSE)
+  all_dates  <- data.table(date = anytime::anydate(all_emails))
+  date_sum   <- all_dates[, .(emails = .N), by = date][order(date)]
 
-emails     <- getMentorActivity(h, students)
-all_emails <- unlist(emails, use.names = FALSE)
-all_dates  <- data.table(date = anytime::anydate(all_emails))
-date_sum   <- all_dates[, .(emails = .N), by = date][order(date)]
+  # Course ------------------------------------------------------------------
 
-
-
-# Course ------------------------------------------------------------------
-
-
-system.time({
   all_graded_assignments <- lapply(students$mathable_course_id, getAsssignmentDetail, netid = netid)
-})
 
-aga_dt <- rbindlist(all_graded_assignments)
-aga_dt[, `:=`(date = anytime::anydate(graded))]
+  aga_dt <- rbindlist(all_graded_assignments)
+  aga_dt[, `:=`(date = anytime::anydate(graded))]
 
-aga_sum <- aga_dt[, .(mathable = .N), by = date]
+  aga_sum <- aga_dt[, .(mathable = .N), by = date]
 
-plot_dat <- merge(date_sum, aga_sum, by = "date", all = TRUE)
+  plot_dat <- merge(date_sum, aga_sum, by = "date", all = TRUE)
 
-plot_dat[is.na(plot_dat)] <- 0
+  plot_dat[is.na(plot_dat)] <- 0
 
-plot_dat[, `:=`(total = 15 * emails + 7 * mathable)]
+  plot_dat[, `:=`(total = 15 * emails + 7 * mathable + 1)]
 
-m_plot_dat <- melt(plot_dat, id.vars = c("date", "total"), variable.factor = TRUE)
+  m_plot_dat <- melt(plot_dat, id.vars = c("date", "total"), variable.factor = TRUE)
 
-bw_ending <- as.Date("2018-04-07", format = "%Y-%m-%d")
-bw_period <- seq(bw_ending - 13, bw_ending, by = "day")
+  bw_ending <- as.Date("2018-04-07", format = "%Y-%m-%d")
+  bw_period <- seq(bw_ending - 13, bw_ending, by = "day")
 
-bw_plot <- m_plot_dat[date %in% bw_period]
-bw_totals <- unique(bw_plot[, .(date, total)])
-ggplot(bw_plot, aes(x = date, y = value, fill = variable)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  scale_x_date(date_breaks = "day", date_labels = "%a, %b %d") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  geom_text(data = bw_totals, aes(x = date, y = 0, label = total), inherit.aes = FALSE)
+  bw_plot <- m_plot_dat[date %in% bw_period]
+  bw_totals <- unique(bw_plot[, .(date, total)])
 
-sum(bw_totals$total) / 60
+  p <- ggplot(bw_plot, aes(x = date, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_x_date(date_breaks = "day", date_labels = "%a, %b %d") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+    geom_text(data = bw_totals, aes(x = date, y = 0, label = total), inherit.aes = FALSE)
 
+  sum(bw_totals$total) / 60
 
-
-ggplotly(p)
+  ggplotly(p)
+}
