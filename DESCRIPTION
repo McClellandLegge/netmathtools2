@@ -1,7 +1,7 @@
 Package: netmathtools2
 Type: Package
 Title: Automated NetMath Student Tracker
-Version: 0.8.2
+Version: 0.8.3
 Authors@R: utils::person("McClelland", "Legge", email = "McClelland.Legge@gmail.com", role = c("aut", "cre"))
 Description: The package helps automate the calculation of a student's status
     in their course as compared to established schedules and highlights any

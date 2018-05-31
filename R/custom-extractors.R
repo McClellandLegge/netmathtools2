@@ -143,8 +143,9 @@ extractStudent <- function(student, handle) {
 
   # select some non-array fields
   cstudent_names <- names(student)
-  ix <- which(cstudent_names %in% c("netId", "course", "status", "startDate",
-                                    "endDate", "endDays", "startDays", "email", "isPartner"))
+  needed_names   <- c("netId", "course", "status", "startDate",
+                      "endDate", "endDays", "startDays", "email", "isPartner")
+  ix             <- which(cstudent_names %in% needed_names)
 
   # combine with some nested lists and convert to data.table
   student_profile <- data.table::as.data.table(
@@ -158,6 +159,14 @@ extractStudent <- function(student, handle) {
       has_proctor        = has_proctor
     )
   )
+
+  # if any of the fields were missing or had a NULL value then we default them
+  # we set to a NA_integer_ because it will get coerced to whatever type
+  # when we stack with the full set
+  missing_names  <- needed_names[!needed_names %in% names(student_profile)]
+  if (length(missing_names) > 0L) {
+    student_profile[, (missing_names) := NA_integer_]
+  }
 
   # rename for consistency
   data.table::setnames(student_profile,
@@ -179,10 +188,14 @@ extractStudent <- function(student, handle) {
   )]
 
   # set R date/time types
-  student_profile[, `:=`(
-    start_date = as.Date(start_date),
+  student_profile[!is.na(start_date), `:=`(
+    start_date = as.Date(start_date)
+  )]
+
+  student_profile[!is.na(end_date), `:=`(
     end_date   = as.Date(end_date)
   )]
+
 
   return(student_profile)
 }
