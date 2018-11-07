@@ -12,6 +12,6 @@ status <- data.table::data.table(
 
 api_endpoint <- "https://nexus.netmath.illinois.edu/api"
 
-mathable_endpoint <- "https://courseware.mathable.io/WSAPI.asmx"
+mathable_endpoint <- "https://courseware.illinois.io/WSAPI.asmx"
 
 devtools::use_data(api_endpoint, mathable_endpoint, status, schedules, internal = TRUE, overwrite = TRUE)

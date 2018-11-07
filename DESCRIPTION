@@ -1,7 +1,7 @@
 Package: netmathtools2
 Type: Package
 Title: Automated NetMath Student Tracker
-Version: 0.8.3
+Version: 0.8.4
 Authors@R: utils::person("McClelland", "Legge", email = "McClelland.Legge@gmail.com", role = c("aut", "cre"))
 Description: The package helps automate the calculation of a student's status
     in their course as compared to established schedules and highlights any
@@ -10,7 +10,7 @@ License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 2.10)
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Imports: data.table,
     jsonlite,
     curl,
