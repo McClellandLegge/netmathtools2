@@ -4,10 +4,10 @@
 \alias{chartProgress}
 \title{Chart the Student's Progress}
 \usage{
-chartProgress(students)
+chartProgress(students_dt)
 }
 \arguments{
-\item{students}{A data.table, the output of \link{getStudentsProgress}}
+\item{students_dt}{A data.table, the output of \link{getStudentsProgress}}
 }
 \description{
 Chart the Student's Progress

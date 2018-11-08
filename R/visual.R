@@ -1,9 +1,9 @@
 #' Chart the Student's Progress
 #'
-#' @param students A data.table, the output of \link{getStudentsProgress}
+#' @param students_dt A data.table, the output of \link{getStudentsProgress}
 #' @importFrom grDevices colorRampPalette
 #' @export
-chartProgress <- function(students) {
+chartProgress <- function(students_dt) {
 
   if (!requireNamespace("tools", quietly = TRUE)) {
     stop("`tools` needed for this function to work. Please install it.",
@@ -15,10 +15,39 @@ chartProgress <- function(students) {
          call. = FALSE)
   }
 
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop("`shiny` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   if (!requireNamespace("DT", quietly = TRUE)) {
     stop("`DT` needed for this function to work. Please install it.",
          call. = FALSE)
   }
+
+  if (!requireNamespace("shinyjs", quietly = TRUE)) {
+    stop("`shinyjs` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  # subset to just the fields that are most relevant
+  students <- students_dt[, .(
+      full
+    , end_days
+    , orientation_date
+    , timeline
+    , has_proctor
+    , days_last_mentor_email
+    , days_last_student_email
+    , days_behind
+    , tryits_behind
+    , lessons_behind
+    , current_pace_interp
+    , needed_pace_interp
+    , completed_assignments
+    , exams
+    , end_date
+  )]
 
   # prettify the names of the table
   spaced_names <- gsub("_", " ", names(students))
@@ -34,7 +63,12 @@ chartProgress <- function(students) {
   email_colors  <- makeEmailCols(length(email_breaks) + 1)
 
   # the UI is just the output of the datatable
-  ui <- shiny::fluidPage(DT::dataTableOutput("students"))
+  ui <- shiny::fluidPage(
+    shinyjs::useShinyjs()
+    , DT::dataTableOutput("students")
+    , actionButton("email", "Email")
+    , actionButton("info", "Information")
+  )
 
   # determine what the indicies are of the sort columns, subtract 1
   # because DT is zero-indexed
@@ -87,6 +121,25 @@ chartProgress <- function(students) {
           )
         )
         return(dt)
+    })
+
+    observe({
+      shinyjs::toggleState("email", length(input$students_rows_selected) > 0L)
+      shinyjs::toggleState("info", length(input$students_rows_selected) > 0L)
+    })
+
+    observeEvent(input$email, {
+      windows <- students_dt[as.integer(input$students_rows_selected),
+        paste0(gsub("api", "tickets/create?studentId=", api_endpoint), id)
+      ]
+      purrr::walk(windows, browseURL)
+    })
+
+    observeEvent(input$info, {
+      windows <- students_dt[as.integer(input$students_rows_selected),
+        paste0(gsub("api", "students/", api_endpoint), id)
+      ]
+      purrr::walk(windows, browseURL)
     })
   }
 

@@ -1,3 +1,20 @@
+
+dplyr_coalesce <- function (...)
+{
+  if (missing(..1)) {
+    abort("At least one argument must be supplied")
+  }
+  values <- dots_list(...)
+  x <- values[[1]]
+  values <- values[-1]
+  for (i in seq_along(values)) {
+    x <- dplyr:::replace_with(x, is.na(x), values[[i]], glue("Argument {i + 1}"),
+                      glue("length of {fmt_args(~x)}"))
+  }
+  x
+}
+
+
 #' Extract Student's Progress in a Course
 #'
 #' @param notebooks A JSON list
@@ -35,15 +52,15 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 
   # determine if a HS or EGR section
   is_highschool <- grepl("_hs_", course_id)
-  is_egr        <- grepl("_egr_", course_id)
+  is_xgr        <- grepl("_egr_|_xgr", course_id)
 
   # find the schedule
   if (is_highschool == TRUE) {
     schedule    <- netmathtools2:::schedules$MM461HS
     course_type <- "HS"
-  } else if(is_egr == TRUE) {
+  } else if(is_xgr == TRUE) {
     schedule    <- netmathtools2:::schedules$MM461EGR
-    course_type <- "EGR"
+    course_type <- "XGR"
   } else {
     schedule    <- netmathtools2:::schedules$MM461
     course_type <- "REG"
@@ -55,7 +72,7 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 
   # see where the student should be based on the number of days they've been in
   # their course as of today
-  if (!is.null(schedule)) {
+  if (!is.null(schedule) & !is.na(days_left)) {
     data.table::setkey(schedule, lesson_num, tryit_name)
     graded_schedule <- graded_assignments[schedule]
 
@@ -143,9 +160,8 @@ extractStudent <- function(student, handle) {
 
   # select some non-array fields
   cstudent_names <- names(student)
-  needed_names   <- c("netId", "course", "status", "startDate",
-                      "endDate", "endDays", "startDays", "email", "isPartner")
-  ix             <- which(cstudent_names %in% needed_names)
+  ix <- which(cstudent_names %in% c("netId", "course", "status", "startDate",
+                                    "endDate", "endDays", "startDays", "email", "isPartner"))
 
   # combine with some nested lists and convert to data.table
   student_profile <- data.table::as.data.table(
@@ -160,18 +176,14 @@ extractStudent <- function(student, handle) {
     )
   )
 
-  # if any of the fields were missing or had a NULL value then we default them
-  # we set to a NA_integer_ because it will get coerced to whatever type
-  # when we stack with the full set
-  missing_names  <- needed_names[!needed_names %in% names(student_profile)]
-  if (length(missing_names) > 0L) {
-    student_profile[, (missing_names) := NA_integer_]
-  }
+  rename_from <- c("netId", "startDate", "endDate", "endDays", "startDays")
+  rename_to   <- c("student_netid", "start_date", "end_date", "end_days", "start_days")
+  rename_ix   <- which(rename_from %in% names(student_profile))
 
   # rename for consistency
-  data.table::setnames(student_profile,
-     c("netId", "startDate", "endDate", "endDays", "startDays"),
-     c("student_netid", "start_date", "end_date", "end_days", "start_days")
+  data.table::setnames(student_profile
+     , rename_from[rename_ix]
+     , rename_to[rename_ix]
   )
 
   # extract the latest email for the student
@@ -188,14 +200,12 @@ extractStudent <- function(student, handle) {
   )]
 
   # set R date/time types
-  student_profile[!is.na(start_date), `:=`(
-    start_date = as.Date(start_date)
-  )]
-
-  student_profile[!is.na(end_date), `:=`(
-    end_date   = as.Date(end_date)
-  )]
-
+  if (!is.null(student_profile$start_date) & !is.null(student_profile$end_date)) {
+    student_profile[, `:=`(
+      start_date = as.Date(start_date),
+      end_date   = as.Date(end_date)
+    )]
+  }
 
   return(student_profile)
 }
