@@ -66,8 +66,8 @@ chartProgress <- function(students_dt) {
   ui <- shiny::fluidPage(
     shinyjs::useShinyjs()
     , DT::dataTableOutput("students")
-    , actionButton("email", "Email")
-    , actionButton("info", "Information")
+    , shiny::actionButton("email", "Email")
+    , shiny::actionButton("info", "Information")
   )
 
   # determine what the indicies are of the sort columns, subtract 1

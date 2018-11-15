@@ -62,6 +62,10 @@ getMentorActivity <- function(handle, students) {
 #' @export
 getAsssignmentDetail <- function(netid, course_id) {
 
+  if (is.na(course_id)) {
+    return(NULL)
+  }
+
   # strip out the deployed course ID and student netID
   info     <- strsplit(course_id, "_(?=[^_]+$)", perl = TRUE)
   deployed <- info[[1]][[1]] %>% gsub("studentcourserecords", "deployedcourses", .)
@@ -71,7 +75,7 @@ getAsssignmentDetail <- function(netid, course_id) {
   h <- composeMathableHandle(netid)
 
   res <- netmathtools2::getRequest(
-    handle   = h
+      handle   = h
     , where    = "mathable"
     , route    = "GetGradebook"
     , courseId = paste0('"', deployed, '"')
