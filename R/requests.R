@@ -279,7 +279,6 @@ getRequest <- function(handle, route, where = "nexus", ...) {
 
   # check the status code
 
-
   # extract the content
   # don't try to flatten the list, but convert arrays to atomic vectors
   content <- jsonlite::fromJSON(

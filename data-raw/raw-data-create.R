@@ -12,6 +12,9 @@ status <- data.table::data.table(
 
 api_endpoint <- "https://nexus.netmath.illinois.edu/api"
 
-mathable_endpoint <- "https://courseware.illinois.io/WSAPI.asmx"
+mathable_hname <- "courseware.illinois.edu"
+mathable_url <- paste0("https://", mathable_hname, "/")
 
-devtools::use_data(api_endpoint, mathable_endpoint, status, schedules, internal = TRUE, overwrite = TRUE)
+mathable_endpoint <- paste0(mathable_url, "WSAPI.asmx")
+
+devtools::use_data(api_endpoint, mathable_hname, mathable_endpoint, mathable_url, status, schedules, internal = TRUE, overwrite = TRUE)
