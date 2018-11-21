@@ -22,20 +22,20 @@ while (is.null(students)) {
   cat(paste("\rTried", tries, "times"))
 }
 
-
-# exclude finished students not being handled by the automated process
-finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
-active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
-
 active_xgr_ids <- c("koleske2", "turner22")
 active_xgr_start <- as.Date("2018-08-27")
 active_xgr_end   <- as.Date("2018-12-12")
-active_students[student_netid %in% active_xgr_ids, `:=`(
+students[student_netid %in% active_xgr_ids, `:=`(
     start_date = active_xgr_start
   , end_date   = active_xgr_end
   , start_days = as.integer(Sys.Date() - active_xgr_start)
   , end_days   = as.integer(active_xgr_end - Sys.Date())
 )]
+
+# exclude finished students not being handled by the automated process
+finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
+active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
+
 
 
 tries <- 0L
