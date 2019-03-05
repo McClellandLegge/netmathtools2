@@ -147,7 +147,7 @@ extractStudent <- function(student, handle) {
   }
 
   # determine if the student has a proctor
-  has_proctor <- ifelse(length(student[["proctor"]]) > 0L, TRUE, FALSE)
+  has_proctor <- ifelse(length(student[["proctor"]]) > 0L || "Onsite" %in% student$tags, TRUE, FALSE)
 
   # some Mathable course ids do not have this pre-pended which results in
   # no matches down the road
