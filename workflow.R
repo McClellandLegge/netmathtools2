@@ -32,6 +32,16 @@ students[student_netid %in% active_xgr_ids, `:=`(
   , end_days   = as.integer(active_xgr_end - Sys.Date())
 )]
 
+active_xgr_ids <- c("mororke2", "bjburto2")
+active_xgr_start <- as.Date("2019-01-14")
+active_xgr_end   <- as.Date("2019-05-01")
+students[student_netid %in% active_xgr_ids, `:=`(
+  start_date = active_xgr_start
+  , end_date   = active_xgr_end
+  , start_days = as.integer(Sys.Date() - active_xgr_start)
+  , end_days   = as.integer(active_xgr_end - Sys.Date())
+)]
+
 # exclude finished students not being handled by the automated process
 finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
 active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
@@ -88,7 +98,7 @@ p <- ggplot(m_plot_dat, aes(x = date, y = value, fill = variable)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   geom_text(data = bw_totals, aes(x = date, y = 0, label = total), inherit.aes = FALSE)
 
-sum(bw_totals$total)
+sum(bw_totals$total) / 60
 
 p
 
