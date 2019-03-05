@@ -15,7 +15,7 @@ Additionally:
 * Must have Python 3.6.* installed and added to the path
     * Suggest installing to `C:/Python36` instead of the default 
 * Must have downloaded and installed the [pywin32](https://sourceforge.net/projects/pywin32/) python module
-    * The bitness of this installer must match that of the Python 3.6 install
+    * The endianness of this installer must match that of the Python 3.6 install
    
 ## Example Workflow:
 
