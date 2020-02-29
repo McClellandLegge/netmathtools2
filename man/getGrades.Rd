@@ -4,12 +4,12 @@
 \alias{getGrades}
 \title{Get a Student's Grades}
 \usage{
-getGrades(handle, student_id)
+getGrades(student_id, nexus_cookies = NULL)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
-
 \item{student_id}{A character string}
+
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 }
 \value{
 A JSON list

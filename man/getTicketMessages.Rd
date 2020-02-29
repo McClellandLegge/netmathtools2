@@ -4,12 +4,12 @@
 \alias{getTicketMessages}
 \title{Request a Specific Student Ticket}
 \usage{
-getTicketMessages(handle, ticket_id)
+getTicketMessages(ticket_id, nexus_cookies = NULL)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
-
 \item{ticket_id}{The unique ticket_id of the}
+
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 }
 \value{
 A JSON list

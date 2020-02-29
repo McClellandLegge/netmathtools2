@@ -4,10 +4,10 @@
 \alias{extractLatestEmailDate}
 \title{Extract the Latest Email From Student}
 \usage{
-extractLatestEmailDate(handle, student_netid)
+extractLatestEmailDate(nexus_cookies = NULL, student_netid)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 
 \item{student_netid}{A student's NetId}
 }

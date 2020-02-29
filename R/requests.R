@@ -1,15 +1,15 @@
 
 #' Request Student's Ticket Threads
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param student_netid Student's netId
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #' @param page Default \code{1}, the page of results to request
 #'
 #' @return A JSON list
 #' @export
-getTicketList <- function(handle, student_netid, page = 1) {
-  conversations <- netmathtools2::getRequest(
-    handle        = handle,
+getTicketList <- function(student_netid, nexus_cookies = NULL, page = 1) {
+  conversations <- getNexusRequest(
+    nexus_cookies = nexus_cookies,
     route         = "cerb/tickets",
     page          = page,
     status        = "All",
@@ -21,15 +21,15 @@ getTicketList <- function(handle, student_netid, page = 1) {
 
 #' Request a Specific Student Ticket
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param ticket_id The unique ticket_id of the
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A JSON list
 #' @export
-getTicketMessages <- function(handle, ticket_id) {
-  ticket <- netmathtools2::getRequest(
-    handle = handle,
-    route  = file.path("cerb/tickets", ticket_id, "messages")
+getTicketMessages <- function(ticket_id, nexus_cookies = NULL) {
+  ticket <- getNexusRequest(
+    route  = file.path("cerb/tickets", ticket_id, "messages"),
+    nexus_cookies = nexus_cookies
   )
 
   return(ticket)
@@ -37,24 +37,28 @@ getTicketMessages <- function(handle, ticket_id) {
 
 #' Get Students' Progress
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param students A \code{\link[data.table]{data.table}} returned by \link{getStudents}
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A \code{\link[data.table]{data.table}} with the same columns and some
 #'     progress metrics appended
 #' @export
 #' @import data.table
-getStudentsProgress <- function(handle, students) {
+getStudentsProgress <- function(students, nexus_cookies = NULL) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("`data.table` needed for this function to work. Please install it.",
          call. = FALSE)
   }
 
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
+
   students_dt <- data.table::as.data.table(students)
 
   # get all the grades and then limit to only the homeworks
-  all_grades    <- sapply(students$id, netmathtools2::getGrades, handle = handle, simplify = FALSE)
+  all_grades    <- sapply(students$id, netmathtools2::getGrades, nexus_cookies = nexus_cookies, simplify = FALSE)
   all_notebooks <- sapply(all_grades, `[[`, "homeworks", simplify = FALSE)
   all_exams     <- sapply(all_grades, function(student_rec) {
 
@@ -187,44 +191,61 @@ needPaceCompose <- function(needed_pace, interval = 0.5) {
 
 #' Get a Student's Grades
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param student_id A character string
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A JSON list
 #' @export
-getGrades <- function(handle, student_id) {
+getGrades <- function(student_id, nexus_cookies = NULL) {
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
+
+  futile.logger::flog.debug(paste0("Getting grades for ", student_id))
 
   req <- file.path("students", student_id, "grades")
-  res <- netmathtools2::getRequest(handle, req)
+  res <- netmathtools2::getNexusRequest(route = req, nexus_cookies = nexus_cookies)
 
   return(res)
 }
 
 #' Get a Mentor's Students
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param net_id A character string
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A \code{\link[data.table]{data.table}}
 #' @export
 #' @import data.table
-getStudents <- function(handle, net_id) {
+getStudents <- function(net_id, nexus_cookies = NULL) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("`data.table` needed for this function to work. Please install it.",
          call. = FALSE)
   }
 
-  students_ls <- netmathtools2::getRequest(
-    handle       = handle,
-    route        = "students",
-    mentor.netId = net_id
+  if (is.null(net_id) || !inherits(net_id, "character")) {
+    rlang::abort("'net_id' must be a character string!")
+  }
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
+
+  futile.logger::flog.debug("Getting student list from Nexus...")
+  students_ls <- getNexusRequest(
+    route         = "students",
+    nexus_cookies = nexus_cookies,
+    mentor.netId  = net_id
   )
 
   # use a custom extractor to pull out specific information from the list
-  students_detail_ls <- lapply(students_ls, netmathtools2::extractStudent, handle = handle)
+  futile.logger::flog.debug("Extracting relevant information from each student's record")
+  students_detail_ls <- lapply(students_ls, netmathtools2::extractStudent, nexus_cookies = nexus_cookies)
   students_detail    <- data.table::rbindlist(students_detail_ls, fill = TRUE)
 
+  futile.logger::flog.debug("Converting character dates to datetime class")
   orientation_dates_utc <- as.POSIXct(
     x      = students_detail$orientation_date,
     tz     = "UTC",
@@ -239,15 +260,16 @@ getStudents <- function(handle, net_id) {
   return(students_detail)
 }
 
-#' Execute a GET request
+
+#' Execute a request to Nexus
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
-#' @param route A character string
+#' @param route What route? E.g. \code{students}, as a character string
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #' @param ... Additional arguments to be passed in the url
 #'
-#' @return A JSON list
+#' @return
 #' @export
-getRequest <- function(handle, route, where = "nexus", ...) {
+getNexusRequest <- function(route, nexus_cookies = NULL, ...) {
 
   if (!requireNamespace("curl", quietly = TRUE)) {
     stop("`curl` needed for this function to work. Please install it.",
@@ -259,6 +281,11 @@ getRequest <- function(handle, route, where = "nexus", ...) {
          call. = FALSE)
   }
 
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop("`httr` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   # compose the request url, get the arguments and convert to named list
   args    <- unlist(list(...))
   if (missing(...)) {
@@ -267,32 +294,69 @@ getRequest <- function(handle, route, where = "nexus", ...) {
     arg_str <- paste0(paste0(names(args), "=", purrr::map_chr(args, URLencode, reserved = TRUE)), collapse = "&")
   }
 
-  if (where == "nexus") {
-    endpoint <- netmathtools2:::api_endpoint
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
 
+  req_url <- sprintf("%s/%s?%s", api_endpoint, route, arg_str)
 
-    req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)
+  cookie_header <- with(nexus_cookies, {
+    paste0(paste(name, value, sep = "="), collapse = "; ")
+  })
 
-    # perform the request
-    res <- curl::curl_fetch_memory(req_url, handle = handle)
+  res <- httr::GET(url = req_url, httr::add_headers(Cookie = cookie_header))
 
+  # check the status code
+  if (res$status_code != 200) {
+    rlang::abort(paste0(req_url, " failed with ", res$status_code))
+  }
 
-    # check the status code
-    if (res$status_code != 200) {
-      rlang::abort(paste0(req_url, " failed with ", res$status_code))
-    }
+  # extract the content
+  # don't try to flatten the list, but convert arrays to atomic vectors
+  content <- jsonlite::fromJSON(
+    txt               = rawToChar(res$content),
+    flatten           = FALSE,
+    simplifyDataFrame = FALSE,
+    simplifyVector    = TRUE
+  )
 
-    # extract the content
-    # don't try to flatten the list, but convert arrays to atomic vectors
-    content <- jsonlite::fromJSON(
-      txt               = rawToChar(res$content),
-      flatten           = FALSE,
-      simplifyDataFrame = FALSE,
-      simplifyVector    = TRUE
-    )
+  return(content)
+}
 
-    return(content)
-  } else if (where == "mathable") {
+#' Execute a GET request
+#'
+#' @param handle An active session established with \link{composeNexusHandle}
+#' @param route A character string
+#' @param ... Additional arguments to be passed in the url
+#'
+#' @return A JSON list
+#' @export
+getRequest <- function(handle = NULL, route, where = "nexus", ...) {
+
+  if (!requireNamespace("curl", quietly = TRUE)) {
+    stop("`curl` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("`jsonlite` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop("`httr` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  # compose the request url, get the arguments and convert to named list
+  args    <- unlist(list(...))
+  if (missing(...)) {
+    arg_str <- ""
+  } else {
+    arg_str <- paste0(paste0(names(args), "=", purrr::map_chr(args, URLencode, reserved = TRUE)), collapse = "&")
+  }
+
+ if (where == "mathable") {
     endpoint <- netmathtools2:::mathable_endpoint
 
     req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)

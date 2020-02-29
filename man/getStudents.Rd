@@ -4,12 +4,12 @@
 \alias{getStudents}
 \title{Get a Mentor's Students}
 \usage{
-getStudents(handle, net_id)
+getStudents(net_id, nexus_cookies = NULL)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
-
 \item{net_id}{A character string}
+
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 }
 \value{
 A \code{\link[data.table]{data.table}}

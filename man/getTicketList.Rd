@@ -4,12 +4,12 @@
 \alias{getTicketList}
 \title{Request Student's Ticket Threads}
 \usage{
-getTicketList(handle, student_netid, page = 1)
+getTicketList(student_netid, nexus_cookies = NULL, page = 1)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
-
 \item{student_netid}{Student's netId}
+
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 
 \item{page}{Default \code{1}, the page of results to request}
 }

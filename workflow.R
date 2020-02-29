@@ -9,22 +9,9 @@ netid      <- "mkemp6"
 year_start <- floor_date(Sys.Date(), "year")
 bw_ending  <- floor_date(Sys.Date(), "week") - 1L
 bw_tp      <- ceiling((bw_ending - min(year_start)) / dweeks(1L) / 2L) + 1
-
-
-
 options("netmathtools.mathable.user" = "mkemp6", "netmathtools.mathable.passwd" = "4V9vqrw5")
-tries <- 0L
-students <- NULL
-while (is.null(students)) {
 
-  h <- composeNexusHandle("mkemp6")
-
-  # students <- getStudents(h, "mkemp6")
-  students <- tryCatch(getStudents(h, "mkemp6"), error = function(e) NULL)
-
-  tries <- tries + 1
-  cat(paste("\rTried", tries, "times"))
-}
+students <- getStudents("mkemp6") # from nexus
 
 active_xgr_ids <- c("khengst2", "chlasta2")
 active_xgr_start <- as.Date("2019-06-10")
@@ -83,18 +70,8 @@ students[student_netid %in% active_xgr_ids, `:=`(
 finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
 active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
 
-tries <- 0L
-student_prog <- NULL
-while (is.null(student_prog)) {
 
-  h <- composeNexusHandle("mkemp6")
-
-  # student_prog <- getStudentsProgress(h, active_students)
-  student_prog <- tryCatch(getStudentsProgress(h, active_students), error = function(e) NULL)
-
-  tries <- tries + 1
-  cat(paste("\rTried", tries, "times"))
-}
+student_prog <- getStudentsProgress(active_students)
 
 # chartProgress(student_prog)
 

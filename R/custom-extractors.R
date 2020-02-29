@@ -31,6 +31,8 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
          call. = FALSE)
   }
 
+  futile.logger::flog.debug(paste0("Extracting progress for ", course_id))
+
   relevant_assignments <- Filter(function(x) {
     x$type == "Homework" & x$courseId == course_id
   }, notebooks)
@@ -119,17 +121,23 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 #' Extract Important Student Information from JSON List
 #'
 #' @param student A JSON list
-#' @param handle A \code{curl} \code{\link[curl]{handle}}
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A \code{\link[data.table]{data.table}}
 #' @export
 #' @import data.table
-extractStudent <- function(student, handle) {
+extractStudent <- function(student, nexus_cookies = NULL) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("`data.table` needed for this function to work. Please install it.",
          call. = FALSE)
   }
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
+
+  futile.logger::flog.debug(paste0("Extracting record for ", student$name$full, "/", student$netId))
 
   id <- student[["_id"]]
 
@@ -188,7 +196,7 @@ extractStudent <- function(student, handle) {
 
   # extract the latest email for the student
   latest_emails <- netmathtools2::extractLatestEmailDate(
-    handle = handle,
+    nexus_cookies = nexus_cookies,
     student_netid = student_profile$student_netid
   )
 
@@ -241,12 +249,16 @@ extractAssignment <- function(assignment) {
 
 #' Extract the Latest Email From Student
 #'
-#' @param handle An active session established with \link{composeNexusHandle}
 #' @param student_netid A student's NetId
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
 #'
 #' @return A Date type object
 #' @export
-extractLatestEmailDate <- function(handle, student_netid) {
+extractLatestEmailDate <- function(nexus_cookies = NULL, student_netid) {
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
 
   page               <- 1
   look_outbound      <- TRUE
@@ -255,7 +267,7 @@ extractLatestEmailDate <- function(handle, student_netid) {
   while (TRUE) {
 
     # get all the conversation tickets on the first page
-    conversations <- netmathtools2::getTicketList(handle, student_netid, page = page)
+    conversations <- netmathtools2::getTicketList(student_netid, page = page, nexus_cookies = nexus_cookies)
 
     # if there are no conversations on this page then we've reached the end
     # and there are no tickets from the student
@@ -267,7 +279,7 @@ extractLatestEmailDate <- function(handle, student_netid) {
     convo_ids <- sapply(conversations[["results"]], `[[`, "id", USE.NAMES = FALSE)
 
     # request the tickets, which include all of the messages
-    convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, handle = handle)
+    convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, nexus_cookies = nexus_cookies)
 
     # combine the messages, we only care about the date, not convo ownership
     all_msg <- unlist(lapply(convo_msgs, `[[`, "results"), recursive = FALSE)

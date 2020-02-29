@@ -1,15 +1,12 @@
 
-#' Compose a Nexus Curl Handle
+
+#' Extract Nexus Cookie(s) from FireFox
 #'
-#' @param netid The mentor netid
+#' @param profile_pattern A regex pattern to help find the correct firefox profile from which to use the \code{cookies.sqlite} DB
 #'
-#' @return A handle object (external pointer to the underlying curl handle).
+#' @return A data.table
 #' @export
-#' @examples
-#' \dontrun{
-#' h <- composeNexusHandle("mkemp6")
-#' }
-composeNexusHandle <- function(netid) {
+extractNexusCookies <- function(profile_pattern = "\\.default-release$") {
 
   if (!requireNamespace("curl", quietly = TRUE)) {
     stop("`curl` needed for this function to work. Please install it.",
@@ -21,38 +18,47 @@ composeNexusHandle <- function(netid) {
          call. = FALSE)
   }
 
-  # extract the nexus cookies
-  h <- curl::new_handle()
-  curl::handle_setheaders(handle = h, "content-type" = "application/json; charset=UTF-8")
-  curl::handle_setopt(h, "ssl_verifypeer" = 0L)
-  req_url <- glue::glue("{api}/auth/user", api = api_endpoint)
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop("`purrr` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
-  # server sets cookies
-  req     <- curl::curl_fetch_memory(req_url, handle = h)
-  # cookies <- curl::handle_cookies(h) %>% data.table::as.data.table()
+  if (!requireNamespace("dplyr", quietly = TRUE)) {
+    stop("`dplyr` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
-  # # compose the key value pairs for the nexus request header
-  # nexus_cookies    <- with(cookies, paste0(name, "=", value))
-  # nexus_cookie_str <- paste0(nexus_cookies, collapse = ";")
-  #
-  # # set a new handle
-  # h <- curl::new_handle()
-  #
-  # # compose the handle
-  # curl::handle_setheaders(h,
-  #   "DNT"             = "1",
-  #   "Accept-Encoding" = "gzip, deflate, br",
-  #   "Accept-Language" = "en-US,en;q=0.8",
-  #   "Accept"          = "application/json, text/plain, */*",
-  #   "User-Agent"      = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36",
-  #   "Connection"      = "keep-alive",
-  #   "Cookie"          = nexus_cookie_str
-  # )
-  #
-  # # don't verify SSL certs
-  # # TODO: figure out why this is necessary and fix if possible
+  if (!requireNamespace("RSQLite", quietly = TRUE)) {
+    stop("`RSQLite` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
-  return(h)
+  if (!requireNamespace("DBI", quietly = TRUE)) {
+    stop("`DBI` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  `%>%` <- purrr::`%>%`
+
+  # find the
+  default_firefox_profile <- fs::path(Sys.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles") %>%
+    fs::dir_ls() %>%
+    purrr::keep(~grepl(profile_pattern, .))
+
+  firefox_cookies_db <- fs::path(default_firefox_profile, "cookies.sqlite")
+
+  con <- DBI::dbConnect(RSQLite::SQLite(), firefox_cookies_db)
+  on.exit(expr = DBI::dbDisconnect(con), add = TRUE, after = TRUE)
+
+  nexus_cookies <- dplyr::tbl(con, "moz_cookies") %>%
+    dplyr::filter(host == "nexus.netmath.illinois.edu") %>%
+    data.table::as.data.table()
+
+  if (nrow(nexus_cookies) == 0L) {
+    rlang::abort("No cookies found for Nexus... are you logged in on Firefox?")
+  }
+
+  return(nexus_cookies)
 }
 
 

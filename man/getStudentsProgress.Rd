@@ -4,12 +4,12 @@
 \alias{getStudentsProgress}
 \title{Get Students' Progress}
 \usage{
-getStudentsProgress(handle, students)
+getStudentsProgress(students, nexus_cookies = NULL)
 }
 \arguments{
-\item{handle}{An active session established with \link{composeNexusHandle}}
-
 \item{students}{A \code{\link[data.table]{data.table}} returned by \link{getStudents}}
+
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 }
 \value{
 A \code{\link[data.table]{data.table}} with the same columns and some

@@ -4,12 +4,12 @@
 \alias{extractStudent}
 \title{Extract Important Student Information from JSON List}
 \usage{
-extractStudent(student, handle)
+extractStudent(student, nexus_cookies = NULL)
 }
 \arguments{
 \item{student}{A JSON list}
 
-\item{handle}{A \code{curl} \code{\link[curl]{handle}}}
+\item{nexus_cookies}{A data.table of cookies for Nexus' \code{sessionId} (and any others)}
 }
 \value{
 A \code{\link[data.table]{data.table}}

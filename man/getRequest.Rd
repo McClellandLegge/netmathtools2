@@ -4,7 +4,7 @@
 \alias{getRequest}
 \title{Execute a GET request}
 \usage{
-getRequest(handle, route, where = "nexus", ...)
+getRequest(handle = NULL, route, where = "nexus", ...)
 }
 \arguments{
 \item{handle}{An active session established with \link{composeNexusHandle}}
