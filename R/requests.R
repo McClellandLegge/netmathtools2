@@ -269,26 +269,70 @@ getRequest <- function(handle, route, where = "nexus", ...) {
 
   if (where == "nexus") {
     endpoint <- netmathtools2:::api_endpoint
-  } else if (where == "mathable") {
-    endpoint <- netmathtools2:::mathable_endpoint
-  }
-  req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)
 
-  # perform the request
-  res <- curl::curl_fetch_memory(req_url, handle = handle)
 
-  # check the status code
+    req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)
 
-  # extract the content
-  # don't try to flatten the list, but convert arrays to atomic vectors
-  content <- jsonlite::fromJSON(
-    txt               = rawToChar(res$content),
-    flatten           = FALSE,
-    simplifyDataFrame = FALSE,
-    simplifyVector    = TRUE
+    # perform the request
+    res <- curl::curl_fetch_memory(req_url, handle = handle)
+
+
+    # check the status code
+    if (res$status_code != 200) {
+      rlang::abort(paste0(req_url, " failed with ", res$status_code))
+    }
+
+    # extract the content
+    # don't try to flatten the list, but convert arrays to atomic vectors
+    content <- jsonlite::fromJSON(
+      txt               = rawToChar(res$content),
+      flatten           = FALSE,
+      simplifyDataFrame = FALSE,
+      simplifyVector    = TRUE
     )
 
-  return(content)
+    return(content)
+  } else if (where == "mathable") {
+    endpoint <- netmathtools2:::mathable_endpoint
+
+    req_url <- sprintf("%s/%s?%s", endpoint, route, arg_str)
+
+    cookies <- decrpytChromeCookies("mathable")
+
+    cookie_vals <- cookies$value
+    names(cookie_vals) <- cookies$name
+
+
+    heads <-  c("dnt"              = "1"
+    , "accept-encoding"  = "gzip, deflate, br"
+    , "accept-language"  = "en-US,en;q=0.9"
+    , "accept"           = "*/*"
+    , "user-agent"       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36"
+    , "connection"       = "keep-alive"
+    , "content-type"     = "application/json; charset=UTF-8"
+    , "referer"          = mathable_url
+    , "authority"        = mathable_hname
+    , "x-requested-with" = "XMLHttpRequest")
+    # perform the request
+    res <- httr::GET(url = req_url, httr::add_headers(heads), httr::set_cookies(.cookies = cookie_vals))
+
+    # # check the status code
+    # if (res$status_code != 200) {
+    #   rlang::abort(paste0(req_url, " failed with ", res$status_code))
+    # }
+
+    # extract the content
+    # don't try to flatten the list, but convert arrays to atomic vectors
+    content <- jsonlite::fromJSON(
+      txt               = rawToChar(res$content),
+      flatten           = FALSE,
+      simplifyDataFrame = FALSE,
+      simplifyVector    = TRUE
+    )
+
+    return(content)
+  }
+
 }
 
 
@@ -304,20 +348,26 @@ getMathableNotebook <- function(handle, student_netid, notebook_id) {
 
   prefix <- ifelse(grepl("_HS_", notebook_id, ignore.case = TRUE), "NetmathPHS", "UIUC")
 
-  if (student_netid %in% c("rant2")) {
+  if (student_netid %in% c("rant2", "pdylag2")) {
     prefix <- "UIUC"
   }
 
+  if (student_netid %in% c("cfahmad2")) {
+    prefix <- "Mathable"
+  }
+
+  student_prefixed <- paste0('"Users/', prefix, '_', student_netid, '"')
   res <- netmathtools2::getRequest(
       handle   = handle
     , where    = "mathable"
     , route    = "GetGradebookNotebook"
     , notebook = paste0('"', notebook_id, '"')
-    , student  = paste0('"Users/', prefix, '_', student_netid, '"')
+    , student  = student_prefixed
   )
 
   if (is.null(res$d$Results)) {
     warning(sprintf("Notebook %s for %s doesn't exist", notebook_id, student_netid))
+    warning(paste0("Check student prefix: ", student_prefixed))
     return(NULL)
   }
 

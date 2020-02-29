@@ -9,6 +9,9 @@ getAsssignmentDetail(netid, course_id)
 \arguments{
 \item{course_id}{}
 }
+\value{
+
+}
 \description{
 Get the details about a Mathable assignment
 }

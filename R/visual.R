@@ -120,6 +120,12 @@ chartProgress <- function(students_dt) {
             email_colors
           )
         )
+
+        dt <- DT::formatStyle(
+            table = dt
+          , columns = seq(ncol(students)) - 1L
+          , fontSize = '50%'
+        )
         return(dt)
     })
 

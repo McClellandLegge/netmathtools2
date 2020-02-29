@@ -62,6 +62,8 @@ getMentorActivity <- function(handle, students) {
 #' @export
 getAsssignmentDetail <- function(netid, course_id) {
 
+  `%>%` <- purrr::`%>%`
+
   if (is.na(course_id)) {
     return(NULL)
   }
@@ -84,29 +86,29 @@ getAsssignmentDetail <- function(netid, course_id) {
   nbs <- res$d$fields %>%
     grep("GiveItaTry|Literacy", ., value = TRUE)
 
-  graded_assignments <- map(nbs, getMathableNotebook, handle = h, student_netid = s_netid) %>%
-    discard(is.null) %>%
-    map(function(x) {
+  graded_assignments <- purrr::map(nbs, getMathableNotebook, handle = h, student_netid = s_netid) %>%
+    purrr::discard(is.null) %>%
+    purrr::map(function(x) {
       attempt  <- x[['Attempt']]
       graded   <- x[['DateGraded']]
       submit   <- x[['SubmitDate']]
       unit     <- x[['UnitNumber']]
       tryit    <- x[['NotebookTitle']]
 
-      if (is.null(attempt) || is.null(graded)) {
+      if (is.null(attempt)) {
         return(NULL)
       }
 
-      data.table(
-        attempt  = attempt
+      data.table::data.table(
+          attempt  = attempt
         , graded   = graded
         , submit   = submit
         , unit     = unit
         , tryit    = tryit
       )
     }) %>%
-    discard(is.null) %>%
-    rbindlist()
+    purrr::discard(is.null) %>%
+    data.table::rbindlist(fill = TRUE)
 
   if (nrow(graded_assignments) > 0) {
     graded_assignments[, `:=`(

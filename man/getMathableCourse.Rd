@@ -11,6 +11,9 @@ getMathableCourse(netid, student_courseid)
 
 \item{student_courseid}{Student's Mathable Course ID}
 }
+\value{
+
+}
 \description{
 Get Mathable Course Information
 }

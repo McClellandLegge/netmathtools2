@@ -13,6 +13,9 @@ getMathableNotebook(handle, student_netid, notebook_id)
 
 \item{notebook_id}{Mathable Notebook Id}
 }
+\value{
+
+}
 \description{
 Get the specifics of a notebook
 }

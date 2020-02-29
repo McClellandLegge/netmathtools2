@@ -10,8 +10,9 @@ License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 2.10)
 LazyData: true
-RoxygenNote: 6.1.1
-Imports: data.table,
+RoxygenNote: 7.0.2
+Imports: 
+    data.table,
     jsonlite,
     curl,
     DBI,
@@ -20,7 +21,10 @@ Imports: data.table,
     brew,
     dbplyr,
     anytime,
-    purrr
+    purrr,
+    rlang,
+    fs,
+    glue
 Suggests: shiny,
     DT,
     tools,

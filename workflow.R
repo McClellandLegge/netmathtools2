@@ -5,10 +5,14 @@ library("purrr")
 library("shiny")
 library("ggplot2")
 
+netid      <- "mkemp6"
 year_start <- floor_date(Sys.Date(), "year")
 bw_ending  <- floor_date(Sys.Date(), "week") - 1L
 bw_tp      <- ceiling((bw_ending - min(year_start)) / dweeks(1L) / 2L) + 1
 
+
+
+options("netmathtools.mathable.user" = "mkemp6", "netmathtools.mathable.passwd" = "4V9vqrw5")
 tries <- 0L
 students <- NULL
 while (is.null(students)) {
@@ -21,6 +25,17 @@ while (is.null(students)) {
   tries <- tries + 1
   cat(paste("\rTried", tries, "times"))
 }
+
+active_xgr_ids <- c("khengst2", "chlasta2")
+active_xgr_start <- as.Date("2019-06-10")
+active_xgr_end   <- as.Date("2019-08-01")
+students[student_netid %in% active_xgr_ids, `:=`(
+    start_date = active_xgr_start
+  , end_date   = active_xgr_end
+  , start_days = as.integer(Sys.Date() - active_xgr_start)
+  , end_days   = as.integer(active_xgr_end - Sys.Date())
+)]
+
 
 active_xgr_ids <- c("koleske2", "turner22")
 active_xgr_start <- as.Date("2018-08-27")
@@ -42,6 +57,28 @@ students[student_netid %in% active_xgr_ids, `:=`(
   , end_days   = as.integer(active_xgr_end - Sys.Date())
 )]
 
+active_xgr_ids <- c("miaso2", "cfahmad2")
+active_xgr_start <- as.Date("2019-08-26")
+active_xgr_end   <- as.Date("2019-12-11")
+students[student_netid %in% active_xgr_ids, `:=`(
+    start_date = active_xgr_start
+  , end_date   = active_xgr_end
+  , start_days = as.integer(Sys.Date() - active_xgr_start)
+  , end_days   = as.integer(active_xgr_end - Sys.Date())
+)]
+
+
+active_xgr_ids <- c("kfarver2", "ingegno2")
+active_xgr_start <- as.Date("2020-01-21")
+active_xgr_end   <- as.Date("2020-05-06")
+students[student_netid %in% active_xgr_ids, `:=`(
+  start_date = active_xgr_start
+  , end_date   = active_xgr_end
+  , start_days = as.integer(Sys.Date() - active_xgr_start)
+  , end_days   = as.integer(active_xgr_end - Sys.Date())
+)]
+
+
 # exclude finished students not being handled by the automated process
 finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
 active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
@@ -59,7 +96,11 @@ while (is.null(student_prog)) {
   cat(paste("\rTried", tries, "times"))
 }
 
-chartProgress(student_prog)
+# chartProgress(student_prog)
+
+fwrite(student_prog, "app/students.csv")
+
+runApp("app/", port = 9999, launch.browser = TRUE, host = "0.0.0.0")
 
 # Mentor Activity ---------------------------------------------------------
 
@@ -71,7 +112,14 @@ date_sum   <- all_dates[, .(emails = .N), by = date][order(date)]
 
 # Course ------------------------------------------------------------------
 
+#
+# students$mathable_course_id[5]
+# students$mathable_course_id[9]
+#
+# lk <- getAsssignmentDetail("mkemp6", students$mathable_course_id[2])
+
 all_graded_assignments <- lapply(students$mathable_course_id, getAsssignmentDetail, netid = netid)
+
 
 aga_dt <- rbindlist(all_graded_assignments)
 aga_dt[, `:=`(date = anytime::anydate(graded))]
@@ -105,3 +153,56 @@ p
 bw_totals[, total := plyr::round_any(total, 30, f = ceiling) / 60]
 
 write.table(bw_totals, file = "clipboard", sep = "\t", row.names = FALSE, col.names = FALSE)
+
+
+
+# Grading -----------------------------------------------------------------
+
+library("futile.logger")
+
+flog.threshold(DEBUG)
+
+student_status <- c('Active', 'Inactive', 'Flagged', 'Withdrawing', 'Withdrawn', 'Completed')
+
+status_res <- map(student_status, ~{
+
+  flog.debug(.)
+
+  # handle for this student's processing
+  h <- composeNexusHandle(netid)
+
+  netmathtools2::getRequest(
+      handle   = h
+    , where    = "nexus"
+    , route    = "students"
+    , format   = "Mathable"
+    , status   = .
+  )
+
+})
+
+status_ls <- unlist(status_res, recursive = FALSE) %>%
+  keep(~!is.null(.$mathable$courseId) && .$mathable$courseId != "")
+
+library("doParallel")
+
+cl <- makeCluster(3L)
+registerDoParallel(cl)
+
+
+foreach(i = seq_along(status_ls)) %dopar% {
+
+  lk <- status_ls[[i]]
+
+  mentor <- list(
+      netid = lk$mentor$netId
+    , name  = lk$mentor$name$full
+  )
+
+  assignments <- getAsssignmentDetail(NULL, lk$mathable$courseId)
+
+}
+
+mathable$courseId
+"students?term=Regular"
+
