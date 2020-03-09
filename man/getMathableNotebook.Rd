@@ -4,14 +4,14 @@
 \alias{getMathableNotebook}
 \title{Get the specifics of a notebook}
 \usage{
-getMathableNotebook(handle, student_netid, notebook_id)
+getMathableNotebook(mathable_cookies = NULL, netid, student_netid, notebook_id)
 }
 \arguments{
-\item{handle}{Valid Mathable curl handle}
-
 \item{student_netid}{Student's Id}
 
 \item{notebook_id}{Mathable Notebook Id}
+
+\item{handle}{Valid Mathable curl handle}
 }
 \value{
 

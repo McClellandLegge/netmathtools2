@@ -4,10 +4,10 @@
 \alias{getMentorActivity}
 \title{Title}
 \usage{
-getMentorActivity(handle, students)
+getMentorActivity(students, nexus_cookies = NULL)
 }
 \arguments{
-\item{students}{}
+\item{nexus_cookies}{}
 }
 \value{
 

@@ -1,23 +1,29 @@
 #' Title
 #'
-#' @param handle
 #' @param students
+#' @param nexus_cookies
 #'
 #' @return
 #' @export
 #' @imports purrr
 #'
-getMentorActivity <- function(handle, students) {
+getMentorActivity <- function(students, nexus_cookies = NULL) {
 
   tickets <- list()
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
 
   for (student_id in students[['student_netid']]) {
     page <- 1L
     tickets[[paste0(student_id)]] <- list()
     while (TRUE) {
 
+      futile.logger::flog.info(glue::glue("Getting page {page} for {student_id}"))
+
       # get all the conversation tickets on the first page
-      conversations <- netmathtools2::getTicketList(handle, student_id, page = page)
+      conversations <- netmathtools2::getTicketList(student_id, page = page, nexus_cookies = nexus_cookies)
 
       # if there are no conversations on this page then we've reached the end
       # and there are no tickets from the student
@@ -29,7 +35,7 @@ getMentorActivity <- function(handle, students) {
       convo_ids <- sapply(conversations[["results"]], `[[`, "id", USE.NAMES = FALSE)
 
       # request the tickets, which include all of the messages
-      convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, handle = handle)
+      convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, nexus_cookies = nexus_cookies)
 
       # combine the messages, we only care about the date, not convo ownership
       all_msg <- unlist(lapply(convo_msgs, `[[`, "results"), recursive = FALSE)
@@ -68,16 +74,18 @@ getAsssignmentDetail <- function(netid, course_id) {
     return(NULL)
   }
 
+  futile.logger::flog.info(paste0("Getting assignment info for ", course_id))
+
   # strip out the deployed course ID and student netID
   info     <- strsplit(course_id, "_(?=[^_]+$)", perl = TRUE)
   deployed <- info[[1]][[1]] %>% gsub("studentcourserecords", "deployedcourses", .)
   s_netid  <- info[[1]][[2]]
 
   # handle for this student's processing
-  h <- composeMathableHandle(netid)
+  mathable_cookies <- extractMathableCookies(netid)
 
-  res <- netmathtools2::getRequest(
-      handle   = h
+  res <- netmathtools2::getMathable(
+      mathable_cookies   = mathable_cookies
     , where    = "mathable"
     , route    = "GetGradebook"
     , courseId = paste0('"', deployed, '"')
@@ -86,7 +94,13 @@ getAsssignmentDetail <- function(netid, course_id) {
   nbs <- res$d$fields %>%
     grep("GiveItaTry|Literacy", ., value = TRUE)
 
-  graded_assignments <- purrr::map(nbs, getMathableNotebook, handle = h, student_netid = s_netid) %>%
+  graded_assignments <- purrr::map(
+      .x               = nbs
+    , .f               = getMathableNotebook
+    , mathable_cookies = mathable_cookies
+    , netid            = netid
+    , student_netid    = s_netid
+  ) %>%
     purrr::discard(is.null) %>%
     purrr::map(function(x) {
       attempt  <- x[['Attempt']]
@@ -94,6 +108,8 @@ getAsssignmentDetail <- function(netid, course_id) {
       submit   <- x[['SubmitDate']]
       unit     <- x[['UnitNumber']]
       tryit    <- x[['NotebookTitle']]
+
+      futile.logger::flog.debug(paste(course_id, tryit, "/"))
 
       if (is.null(attempt)) {
         return(NULL)

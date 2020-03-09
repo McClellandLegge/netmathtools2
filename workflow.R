@@ -81,8 +81,7 @@ runApp("app/", port = 9999, launch.browser = TRUE, host = "0.0.0.0")
 
 # Mentor Activity ---------------------------------------------------------
 
-h          <- composeNexusHandle("mkemp6")
-emails     <- getMentorActivity(h, students)
+emails     <- getMentorActivity(students)
 all_emails <- unlist(emails, use.names = FALSE)
 all_dates  <- data.table(date = anytime::anydate(all_emails))
 date_sum   <- all_dates[, .(emails = .N), by = date][order(date)]
@@ -103,13 +102,13 @@ aga_dt[, `:=`(date = anytime::anydate(graded))]
 
 aga_sum   <- aga_dt[, .(mathable = .N), by = date]
 plot_dat  <- merge(date_sum, aga_sum, by = "date", all = TRUE)
-plot_dat[, student_progress_check := 15]
+plot_dat[, student_progress_check := 8]
 
 bw_period <- data.table(date = seq(bw_ending - 13, bw_ending, by = "day"))
 bw_plot   <- merge(plot_dat, bw_period, by = "date", all.y = TRUE)
 
 bw_plot[is.na(bw_plot)] <- 0
-bw_plot[, `:=`(total = 15 * emails + 7 * mathable + student_progress_check)]
+bw_plot[, `:=`(total = 10 * emails + 6 * mathable + student_progress_check)]
 
 bw_totals <- unique(bw_plot[, .(date, total)])
 
@@ -183,3 +182,36 @@ foreach(i = seq_along(status_ls)) %dopar% {
 mathable$courseId
 "students?term=Regular"
 
+
+
+# Scratch -----------------------------------------------------------------
+
+
+# compose the key value pairs for the mathable request header
+mathable_cookies    <- with(cookies, paste0(name, "=", value))
+mathable_cookie_str <- paste0(mathable_cookies, collapse = ";")
+
+# set a new handle
+h <- curl::new_handle()
+
+# compose the handle
+curl::handle_setheaders(
+  handle             = h
+  , "dnt"              = "1"
+  , "accept-encoding"  = "gzip, deflate, br"
+  , "accept-language"  = "en-US,en;q=0.9"
+  , "accept"           = "*/*"
+  , "user-agent"       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36"
+  , "connection"       = "keep-alive"
+  , "content-type"     = "application/json; charset=UTF-8"
+  , "referer"          = mathable_url
+  , "authority"        = mathable_hname
+  , "x-requested-with" = "XMLHttpRequest"
+  , "cookies"          = mathable_cookie_str
+)
+
+# don't verify SSL certs
+# TODO: figure out why this is necessary and fix if possible
+curl::handle_setopt(h, "ssl_verifypeer" = 0L)
+
+return(h)
