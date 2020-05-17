@@ -41,18 +41,42 @@ extractNexusCookies <- function(profile_pattern = "\\.default-release$") {
   `%>%` <- purrr::`%>%`
 
   # find the
-  default_firefox_profile <- fs::path(Sys.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles") %>%
-    fs::dir_ls() %>%
-    purrr::keep(~grepl(profile_pattern, .))
+  os <- Sys.info()['sysname']
+  if (os == "Linux") {
+    default_firefox_profile <- fs::path(Sys.getenv("HOME"), ".mozilla/firefox/") %>%
+      fs::dir_ls() %>%
+      purrr::keep(~grepl("default-default", .))
 
-  firefox_cookies_db <- fs::path(default_firefox_profile, "cookies.sqlite")
+    firefox_cookies_org <- fs::path(default_firefox_profile, "cookies.sqlite")
+    td <- tempdir()
+    fs::file_copy(firefox_cookies_org, td)
+    firefox_cookies_db <- fs::path(td, "cookies.sqlite")
+  } else if (os == "Darwin") {
+    rlang::stop("Firefox location of cookies not defined for Mac")
+  } else if (ox == "Windows") {
+    default_firefox_profile <- fs::path(Sys.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles") %>%
+      fs::dir_ls() %>%
+      purrr::keep(~grepl(profile_pattern, .))
+
+    firefox_cookies_db <- fs::path(default_firefox_profile, "cookies.sqlite")
+  }
 
   con <- DBI::dbConnect(RSQLite::SQLite(), firefox_cookies_db)
-  on.exit(expr = DBI::dbDisconnect(con), add = TRUE, after = TRUE)
 
   nexus_cookies <- dplyr::tbl(con, "moz_cookies") %>%
     dplyr::filter(host == "nexus.netmath.illinois.edu") %>%
     data.table::as.data.table()
+
+  DBI::dbDisconnect(con)
+
+  if (os == "Linux") {
+    fs::file_delete(firefox_cookies_db)
+  }
+
+  if (nrow(nexus_cookies) == 0) {
+    res <- httr::GET("https://nexus.netmath.illinois.edu")
+    nexus_cookies <- cookies(res) %>% as.data.table()
+  }
 
   if (nrow(nexus_cookies) == 0L) {
     rlang::abort("No cookies found for Nexus... are you logged in on Firefox?")
