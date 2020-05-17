@@ -75,10 +75,15 @@ student_prog <- getStudentsProgress(active_students)
 
 # chartProgress(student_prog)
 
+fs::dir_create("app", recurse = TRUE)
 fwrite(student_prog, "app/students.csv")
 
 runApp("app/", port = 9999, launch.browser = TRUE, host = "0.0.0.0")
 
+cache_fl <- fs::dir_ls("/home/mlegge/ShinyApps/netmath-students/data/", regex = "students-\\d{4}-\\d{2}-\\d{2}\\.csv") %>%
+  sort() %>% tail(1L) %>% return()
+
+students <- fread(cache_fl)
 # Mentor Activity ---------------------------------------------------------
 
 emails     <- getMentorActivity(students)
@@ -129,6 +134,8 @@ p
 bw_totals[, total := plyr::round_any(total, 30, f = ceiling) / 60]
 
 write.table(bw_totals, file = "clipboard", sep = "\t", row.names = FALSE, col.names = FALSE)
+
+clipr::write_clip(bw_totals, object_type = "table", breaks = "\t")
 
 
 
