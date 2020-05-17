@@ -22,6 +22,10 @@ if (!requireNamespace("shinyjs", quietly = TRUE)) {
   stop("`shinyjs` needed for this function to work. Please install it.",
        call. = FALSE)
 }
+library("purrr")
+library("DT")
+library("shinyjs")
+library("shiny")
 
 students_dt <- fread("students.csv")
 
