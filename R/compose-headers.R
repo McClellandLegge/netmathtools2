@@ -73,11 +73,6 @@ extractNexusCookies <- function(profile_pattern = "\\.default-release$") {
     fs::file_delete(firefox_cookies_db)
   }
 
-  if (nrow(nexus_cookies) == 0) {
-    res <- httr::GET("https://nexus.netmath.illinois.edu")
-    nexus_cookies <- cookies(res) %>% as.data.table()
-  }
-
   if (nrow(nexus_cookies) == 0L) {
     rlang::abort("No cookies found for Nexus... are you logged in on Firefox?")
   }

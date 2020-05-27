@@ -51,11 +51,33 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
          call. = FALSE)
   }
 
+  students_dt <- data.table::as.data.table(students)
+
   if (is.null(nexus_cookies)) {
     nexus_cookies <- extractNexusCookies()
   }
 
-  students_dt <- data.table::as.data.table(students)
+  refresh_start <- Sys.time()
+  purrr::pwalk(students_dt, function(id, student_netid, ...) {
+    futile.logger::flog.info(paste0("Re-syncing grades for ", student_netid))
+    netmathtools2::putNexus(route = paste0("students/", id, "/grades"), nexus_cookies = nexus_cookies)
+  })
+
+  refreshes <- students_dt$grades_last_updated
+  refreshes[is.na(refreshes)] <- as.POSIXct("2019-12-31")
+
+  refreshes <- as.list(refreshes)
+  while (any(purrr::map_lgl(refreshes, ~difftime(refresh_start, ., units = "hours") > 0))) {
+    flog.debug("Waiting for refreshes to complete")
+    Sys.sleep(10L)
+
+    refreshes <- purrr::pmap(students_dt, function(id, ...) {
+      res <- getNexusRequest(route = paste0("students/", id), nexus_cookies = nexus_cookies)
+      tryDateTime(res$mathable$gradesUpdatedDate)
+    }) %>% unlist() %>% as.POSIXct(origin = "1970-01-01")
+
+    refreshes[is.na(refreshes)] <- as.POSIXct("2019-12-31")
+  }
 
   # get all the grades and then limit to only the homeworks
   all_grades    <- sapply(students$id, netmathtools2::getGrades, nexus_cookies = nexus_cookies, simplify = FALSE)
@@ -74,7 +96,7 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
     # examine each record and attach either the score or an indicator that
     # it hasn't been taken
     exam_records <- sapply(exams, function(exam_rec) {
-      score <- ifelse(is.null(exam_rec$score), "Not Taken", exam_rec$score)
+      score <- ifelse(exam_rec$status == "Entered", "Submitted", ifelse(is.null(exam_rec$score), "Not Taken", exam_rec$score))
       exam  <- paste0(exam_rec$name, ": ", score)
       return(exam)
     }, USE.NAMES = FALSE)
@@ -90,8 +112,6 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
 
     return(html_exam_recs)
   }, simplify = FALSE)
-
-  rm(all_grades)
 
   # combine the exams into a data.table for merge later downstream
   exams_dt <- data.table::rbindlist(all_exams, idcol = "id")
@@ -220,11 +240,6 @@ getGrades <- function(student_id, nexus_cookies = NULL) {
 #' @import data.table
 getStudents <- function(net_id, nexus_cookies = NULL) {
 
-  if (!requireNamespace("data.table", quietly = TRUE)) {
-    stop("`data.table` needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-
   if (is.null(net_id) || !inherits(net_id, "character")) {
     rlang::abort("'net_id' must be a character string!")
   }
@@ -242,20 +257,11 @@ getStudents <- function(net_id, nexus_cookies = NULL) {
 
   # use a custom extractor to pull out specific information from the list
   futile.logger::flog.debug("Extracting relevant information from each student's record")
-  students_detail_ls <- lapply(students_ls, netmathtools2::extractStudent, nexus_cookies = nexus_cookies)
+  students_detail_ls <- purrr::map(students_ls, extractStudent, nexus_cookies = nexus_cookies)
   students_detail    <- data.table::rbindlist(students_detail_ls, fill = TRUE)
 
   futile.logger::flog.debug("Converting character dates to datetime class")
-  orientation_dates_utc <- as.POSIXct(
-    x      = students_detail$orientation_date,
-    tz     = "UTC",
-    format = "%Y-%m-%dT%H:%M:%OSZ"
-  )
-
-  students_detail$orientation_date <- as.Date(as.POSIXlt(
-    x  = orientation_dates_utc,
-    tz = "America/Chicago"
-  ))
+  students_detail[, orientation_date := anytime::anytime(orientation_date, asUTC = TRUE)]
 
   return(students_detail)
 }
@@ -287,7 +293,8 @@ getNexusRequest <- function(route, nexus_cookies = NULL, ...) {
   }
 
   # compose the request url, get the arguments and convert to named list
-  args    <- unlist(list(...))
+  arg_ls  <- list(...)
+  args    <- unlist(arg_ls)
   if (missing(...)) {
     arg_str <- ""
   } else {
@@ -322,6 +329,70 @@ getNexusRequest <- function(route, nexus_cookies = NULL, ...) {
 
   return(content)
 }
+
+#' Execute a put to Nexus
+#'
+#' @param route What route? E.g. \code{students}, as a character string
+#' @param nexus_cookies A data.table of cookies for Nexus' \code{sessionId} (and any others)
+#' @param ... Additional arguments to be passed in the url
+#'
+#' @return
+#' @export
+putNexus <- function(route, nexus_cookies = NULL, ...) {
+
+  if (!requireNamespace("curl", quietly = TRUE)) {
+    stop("`curl` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("`jsonlite` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop("`httr` needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+  # compose the request url, get the arguments and convert to named list
+  arg_ls  <- list(...)
+  args    <- unlist(arg_ls)
+  if (missing(...)) {
+    arg_str <- ""
+  } else {
+    arg_str <- paste0(paste0(names(args), "=", purrr::map_chr(args, URLencode, reserved = TRUE)), collapse = "&")
+  }
+
+  if (is.null(nexus_cookies)) {
+    nexus_cookies <- extractNexusCookies()
+  }
+
+  req_url <- sprintf("%s/%s?%s", api_endpoint, route, arg_str)
+
+  cookie_header <- with(nexus_cookies, {
+    paste0(paste(name, value, sep = "="), collapse = "; ")
+  })
+
+  res <- httr::PUT(url = req_url, httr::add_headers(Cookie = cookie_header))
+
+  # check the status code
+  if (res$status_code != 200) {
+    rlang::abort(paste0(req_url, " failed with ", res$status_code))
+  }
+
+  # extract the content
+  # don't try to flatten the list, but convert arrays to atomic vectors
+  content <- jsonlite::fromJSON(
+    txt               = rawToChar(res$content),
+    flatten           = FALSE,
+    simplifyDataFrame = FALSE,
+    simplifyVector    = TRUE
+  )
+
+  return(content)
+}
+
 
 #' Execute a GET request
 #'

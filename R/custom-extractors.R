@@ -118,6 +118,14 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 }
 
 
+tryDateTime <- function(x) {
+  if (is.null(x) || is.na(x) || x == "") {
+    return(NA_POSIXct_)
+  } else {
+    anytime::anytime(x, asUTC = TRUE)
+  }
+}
+
 #' Extract Important Student Information from JSON List
 #'
 #' @param student A JSON list
@@ -128,11 +136,6 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
 #' @import data.table
 extractStudent <- function(student, nexus_cookies = NULL) {
 
-  if (!requireNamespace("data.table", quietly = TRUE)) {
-    stop("`data.table` needed for this function to work. Please install it.",
-         call. = FALSE)
-  }
-
   if (is.null(nexus_cookies)) {
     nexus_cookies <- extractNexusCookies()
   }
@@ -140,6 +143,15 @@ extractStudent <- function(student, nexus_cookies = NULL) {
   futile.logger::flog.debug(paste0("Extracting record for ", student$name$full, "/", student$netId))
 
   id <- student[["_id"]]
+
+  res <- getNexusRequest(route = paste0("students/", id), nexus_cookies = nexus_cookies)
+
+  dates_and_section <- data.table::data.table(
+      grades_last_updated = tryDateTime(res$mathable$gradesUpdatedDate)
+    , last_mentor_email   = tryDateTime(res$mentor$lastResponseDate)
+    , last_student_email  = tryDateTime(res$mentor$lastEmailDate)
+    , section             = res$section
+  )
 
   # determine if the student has had any sort of extension approved
   exts <- student[["extensions"]]
@@ -177,12 +189,12 @@ extractStudent <- function(student, nexus_cookies = NULL) {
       `id` = id,
       student[ix],
       student[["name"]],
-      orientation_date   = student[["courseOrientation"]][["date"]],
+      orientation_date   = tryDateTime(student[["courseOrientation"]][["date"]]),
       mathable_course_id = mathable_course_id,
       timeline           = timeline,
       has_proctor        = has_proctor
     )
-  )
+  ) %>% cbind(dates_and_section)
 
   rename_from <- c("netId", "startDate", "endDate", "endDays", "startDays")
   rename_to   <- c("student_netid", "start_date", "end_date", "end_days", "start_days")
@@ -194,24 +206,17 @@ extractStudent <- function(student, nexus_cookies = NULL) {
      , rename_to[rename_ix]
   )
 
-  # extract the latest email for the student
-  latest_emails <- netmathtools2::extractLatestEmailDate(
-    nexus_cookies = nexus_cookies,
-    student_netid = student_profile$student_netid
-  )
-
   # set latest email/emailed and days since
-  student_profile[, (names(latest_emails)) := as.list(latest_emails)]
   student_profile[, `:=`(
-    days_last_mentor_email  = as.numeric(difftime(Sys.Date(), last_mentor_email, units = "days")),
-    days_last_student_email = as.numeric(difftime(Sys.Date(), last_student_email, units = "days"))
+    days_last_mentor_email  = round(as.numeric(difftime(Sys.time(), last_mentor_email, units = "days")), 2),
+    days_last_student_email = round(as.numeric(difftime(Sys.time(), last_student_email, units = "days")), 2)
   )]
 
   # set R date/time types
   if (!is.null(student_profile$start_date) & !is.null(student_profile$end_date)) {
     student_profile[, `:=`(
-      start_date = as.Date(start_date),
-      end_date   = as.Date(end_date)
+      start_date = tryDateTime(start_date),
+      end_date   = tryDateTime(end_date)
     )]
   }
 
