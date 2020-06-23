@@ -66,6 +66,16 @@ students[student_netid %in% active_xgr_ids, `:=`(
 )]
 
 
+active_xgr_ids <- c("mmaynes2", "jlefer2")
+active_xgr_start <- as.Date("2020-06-15")
+active_xgr_end   <- as.Date("2020-08-06")
+students[student_netid %in% active_xgr_ids, `:=`(
+  start_date = active_xgr_start
+  , end_date   = active_xgr_end
+  , start_days = as.integer(Sys.Date() - active_xgr_start)
+  , end_days   = as.integer(active_xgr_end - Sys.Date())
+)]
+
 # exclude finished students not being handled by the automated process
 finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
 active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
@@ -107,13 +117,13 @@ aga_dt[, `:=`(date = anytime::anydate(graded))]
 
 aga_sum   <- aga_dt[, .(mathable = .N), by = date]
 plot_dat  <- merge(date_sum, aga_sum, by = "date", all = TRUE)
-plot_dat[, student_progress_check := 8]
+plot_dat[, student_progress_check := 15]
 
 bw_period <- data.table(date = seq(bw_ending - 13, bw_ending, by = "day"))
 bw_plot   <- merge(plot_dat, bw_period, by = "date", all.y = TRUE)
 
 bw_plot[is.na(bw_plot)] <- 0
-bw_plot[, `:=`(total = 10 * emails + 6 * mathable + student_progress_check)]
+bw_plot[, `:=`(total = 10 * emails + 7 * mathable + student_progress_check)]
 
 bw_totals <- unique(bw_plot[, .(date, total)])
 
