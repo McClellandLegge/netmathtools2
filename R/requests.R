@@ -60,23 +60,21 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
   refresh_start <- Sys.time()
   purrr::pwalk(students_dt, function(id, student_netid, ...) {
     futile.logger::flog.info(paste0("Re-syncing grades for ", student_netid))
-    netmathtools2::putNexus(route = paste0("students/", id, "/grades"), nexus_cookies = nexus_cookies)
+    try(netmathtools2::putNexus(route = paste0("students/", id, "/grades"), nexus_cookies = nexus_cookies))
   })
 
   refreshes <- students_dt$grades_last_updated
-  refreshes[is.na(refreshes)] <- as.POSIXct("2019-12-31")
 
   refreshes <- as.list(refreshes)
-  while (any(purrr::map_lgl(refreshes, ~difftime(refresh_start, ., units = "hours") > 0))) {
-    flog.debug("Waiting for refreshes to complete")
+  while (any(purrr::map_lgl(purrr::keep(refreshes, ~!is.na(.)), ~difftime(refresh_start, ., units = "hours") > 0))) {
+    futile.logger::flog.debug("Waiting for refreshes to complete")
     Sys.sleep(10L)
 
     refreshes <- purrr::pmap(students_dt, function(id, ...) {
       res <- getNexusRequest(route = paste0("students/", id), nexus_cookies = nexus_cookies)
-      tryDateTime(res$mathable$gradesUpdatedDate)
+      netmathtools2:::tryDateTime(res$mathable$gradesUpdatedDate)
     }) %>% unlist() %>% as.POSIXct(origin = "1970-01-01")
 
-    refreshes[is.na(refreshes)] <- as.POSIXct("2019-12-31")
   }
 
   # get all the grades and then limit to only the homeworks
@@ -258,6 +256,9 @@ getStudents <- function(net_id, nexus_cookies = NULL) {
   # use a custom extractor to pull out specific information from the list
   futile.logger::flog.debug("Extracting relevant information from each student's record")
   students_detail_ls <- purrr::map(students_ls, extractStudent, nexus_cookies = nexus_cookies)
+  purrr::walk(students_detail_ls, function(dt) {
+    dt[, `:=`(last_mentor_email = as.Date(last_mentor_email), last_student_email = as.Date(last_student_email))]
+  })
   students_detail    <- data.table::rbindlist(students_detail_ls, fill = TRUE)
 
   futile.logger::flog.debug("Converting character dates to datetime class")

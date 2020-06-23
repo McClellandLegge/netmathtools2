@@ -53,7 +53,7 @@ extractNexusCookies <- function(profile_pattern = "\\.default-release$") {
     firefox_cookies_db <- fs::path(td, "cookies.sqlite")
   } else if (os == "Darwin") {
     rlang::stop("Firefox location of cookies not defined for Mac")
-  } else if (ox == "Windows") {
+  } else if (os == "Windows") {
     default_firefox_profile <- fs::path(Sys.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles") %>%
       fs::dir_ls() %>%
       purrr::keep(~grepl(profile_pattern, .))
