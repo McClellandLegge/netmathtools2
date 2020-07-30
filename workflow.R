@@ -5,6 +5,10 @@ library("purrr")
 library("shiny")
 library("ggplot2")
 
+library("futile.logger")
+
+flog.threshold("DEBUG")
+
 netid      <- "mkemp6"
 year_start <- floor_date(Sys.Date(), "year")
 bw_ending  <- floor_date(Sys.Date(), "week") - 1L

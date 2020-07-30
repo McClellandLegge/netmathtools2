@@ -63,10 +63,10 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
     try(netmathtools2::putNexus(route = paste0("students/", id, "/grades"), nexus_cookies = nexus_cookies))
   })
 
-  refreshes <- students_dt$grades_last_updated
+  refreshes <- as.list(students_dt$grades_last_updated)
 
-  refreshes <- as.list(refreshes)
   while (any(purrr::map_lgl(purrr::keep(refreshes, ~!is.na(.)), ~difftime(refresh_start, ., units = "hours") > 0))) {
+    futile.logger::flog.debug(refreshes)
     futile.logger::flog.debug("Waiting for refreshes to complete")
     Sys.sleep(10L)
 

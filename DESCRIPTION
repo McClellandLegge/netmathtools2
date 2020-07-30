@@ -10,7 +10,7 @@ License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 2.10)
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Imports: 
     data.table,
     jsonlite,
