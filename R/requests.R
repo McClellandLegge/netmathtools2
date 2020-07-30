@@ -58,14 +58,16 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
   }
 
   refresh_start <- Sys.time()
+  futile.logger::flog.info(paste0("Starting refresh at ", refresh_start))
   purrr::pwalk(students_dt, function(id, student_netid, ...) {
     futile.logger::flog.info(paste0("Re-syncing grades for ", student_netid))
     try(netmathtools2::putNexus(route = paste0("students/", id, "/grades"), nexus_cookies = nexus_cookies))
   })
 
-  refreshes <- as.list(students_dt$grades_last_updated)
+  refreshes <- students_dt$grades_last_updated
 
-  while (any(purrr::map_lgl(purrr::keep(refreshes, ~!is.na(.)), ~difftime(refresh_start, ., units = "hours") > 0))) {
+  done <- FALSE
+  while (done == FALSE) {
     futile.logger::flog.debug(refreshes)
     futile.logger::flog.debug("Waiting for refreshes to complete")
     Sys.sleep(10L)
@@ -75,6 +77,13 @@ getStudentsProgress <- function(students, nexus_cookies = NULL) {
       netmathtools2:::tryDateTime(res$mathable$gradesUpdatedDate)
     }) %>% unlist() %>% as.POSIXct(origin = "1970-01-01")
 
+
+    time_diffs <- purrr::keep(refreshes, ~!is.na(.)) %>%
+      difftime(refresh_start, ., units = "mins") %>%
+      round(digits = 0L) %>%
+      as.numeric()
+
+    done <- all(time_diffs <= 0)
   }
 
   # get all the grades and then limit to only the homeworks
