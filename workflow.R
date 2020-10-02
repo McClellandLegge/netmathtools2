@@ -17,62 +17,9 @@ options("netmathtools.mathable.user" = "mkemp6", "netmathtools.mathable.passwd" 
 
 students <- getStudents("mkemp6") # from nexus
 
-active_xgr_ids <- c("khengst2", "chlasta2")
-active_xgr_start <- as.Date("2019-06-10")
-active_xgr_end   <- as.Date("2019-08-01")
-students[student_netid %in% active_xgr_ids, `:=`(
-    start_date = active_xgr_start
-  , end_date   = active_xgr_end
-  , start_days = as.integer(Sys.Date() - active_xgr_start)
-  , end_days   = as.integer(active_xgr_end - Sys.Date())
-)]
-
-
-active_xgr_ids <- c("koleske2", "turner22")
-active_xgr_start <- as.Date("2018-08-27")
-active_xgr_end   <- as.Date("2018-12-12")
-students[student_netid %in% active_xgr_ids, `:=`(
-    start_date = active_xgr_start
-  , end_date   = active_xgr_end
-  , start_days = as.integer(Sys.Date() - active_xgr_start)
-  , end_days   = as.integer(active_xgr_end - Sys.Date())
-)]
-
-active_xgr_ids <- c("mororke2", "bjburto2")
-active_xgr_start <- as.Date("2019-01-14")
-active_xgr_end   <- as.Date("2019-05-01")
-students[student_netid %in% active_xgr_ids, `:=`(
-  start_date = active_xgr_start
-  , end_date   = active_xgr_end
-  , start_days = as.integer(Sys.Date() - active_xgr_start)
-  , end_days   = as.integer(active_xgr_end - Sys.Date())
-)]
-
-active_xgr_ids <- c("miaso2", "cfahmad2")
-active_xgr_start <- as.Date("2019-08-26")
-active_xgr_end   <- as.Date("2019-12-11")
-students[student_netid %in% active_xgr_ids, `:=`(
-    start_date = active_xgr_start
-  , end_date   = active_xgr_end
-  , start_days = as.integer(Sys.Date() - active_xgr_start)
-  , end_days   = as.integer(active_xgr_end - Sys.Date())
-)]
-
-
-active_xgr_ids <- c("kfarver2", "ingegno2")
-active_xgr_start <- as.Date("2020-01-21")
-active_xgr_end   <- as.Date("2020-05-06")
-students[student_netid %in% active_xgr_ids, `:=`(
-  start_date = active_xgr_start
-  , end_date   = active_xgr_end
-  , start_days = as.integer(Sys.Date() - active_xgr_start)
-  , end_days   = as.integer(active_xgr_end - Sys.Date())
-)]
-
-
-active_xgr_ids <- c("mmaynes2", "jlefer2")
-active_xgr_start <- as.Date("2020-06-15")
-active_xgr_end   <- as.Date("2020-08-06")
+active_xgr_ids <- c("jblythe2", "knb4")
+active_xgr_start <- as.Date("2020-08-24")
+active_xgr_end   <- as.Date("2020-12-09")
 students[student_netid %in% active_xgr_ids, `:=`(
   start_date = active_xgr_start
   , end_date   = active_xgr_end
@@ -81,9 +28,8 @@ students[student_netid %in% active_xgr_ids, `:=`(
 )]
 
 # exclude finished students not being handled by the automated process
-finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2")
+finished_xgr_ids <- c("jkim619", "konicek2", "mmbeasl2", "msalis2", "mabusch2", "jlefer2", "mmaynes2")
 active_students <- students[!student_netid %in% finished_xgr_ids & end_days > -30]
-
 
 student_prog <- getStudentsProgress(active_students)
 
@@ -98,6 +44,7 @@ cache_fl <- fs::dir_ls("/home/mlegge/ShinyApps/netmath-students/data/", regex = 
   sort() %>% tail(1L) %>% return()
 
 students <- fread(cache_fl)
+
 # Mentor Activity ---------------------------------------------------------
 
 emails     <- getMentorActivity(students)
