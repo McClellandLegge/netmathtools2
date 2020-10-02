@@ -2,9 +2,13 @@
 % Please edit documentation in R/mentor-activity.R
 \name{getMentorActivity}
 \alias{getMentorActivity}
-\title{Title}
+\title{Get mentor email activity}
 \usage{
-getMentorActivity(students, nexus_cookies = NULL)
+getMentorActivity(
+  students,
+  nexus_cookies = NULL,
+  earliest_date = lubridate::floor_date(Sys.Date(), "week") - 2 * 7
+)
 }
 \arguments{
 \item{nexus_cookies}{}
@@ -13,5 +17,5 @@ getMentorActivity(students, nexus_cookies = NULL)
 
 }
 \description{
-Title
+Get mentor email activity
 }

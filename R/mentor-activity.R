@@ -1,4 +1,4 @@
-#' Title
+#' Get mentor email activity
 #'
 #' @param students
 #' @param nexus_cookies
@@ -7,7 +7,7 @@
 #' @export
 #' @imports purrr
 #'
-getMentorActivity <- function(students, nexus_cookies = NULL) {
+getMentorActivity <- function(students, nexus_cookies = NULL, earliest_date =  lubridate::floor_date(Sys.Date(), "week") - 2 * 7) {
 
   tickets <- list()
 
@@ -31,8 +31,16 @@ getMentorActivity <- function(students, nexus_cookies = NULL) {
         break
       }
 
+      conversation_res <- purrr::keep(conversations[["results"]], function(res) {
+        anytime::anytime(res$updated) >= earliest_date
+      })
+
+      if (length(conversation_res) == 0) {
+        break
+      }
+
       # grab the conversation ids
-      convo_ids <- sapply(conversations[["results"]], `[[`, "id", USE.NAMES = FALSE)
+      convo_ids <- sapply(conversation_res, `[[`, "id", USE.NAMES = FALSE)
 
       # request the tickets, which include all of the messages
       convo_msgs <- lapply(convo_ids, netmathtools2::getTicketMessages, nexus_cookies = nexus_cookies)
