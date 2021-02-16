@@ -1,5 +1,6 @@
 schedules <- list(
-  `MM461` = data.table::fread("data-raw/netmath461.csv")
+    `MM461` = data.table::fread("data-raw/netmath461.csv")
+  , `MM461EXT` = data.table::fread("data-raw/netmath461EXT.csv")
   , `MM461EGR` = data.table::fread("data-raw/netmath461EGR.csv")
   , `MM461HS` = data.table::fread("data-raw/netmath461HS.csv")
 )
@@ -17,4 +18,4 @@ mathable_url <- paste0("https://", mathable_hname, "/")
 
 mathable_endpoint <- paste0(mathable_url, "WSAPI.asmx")
 
-devtools::use_data(api_endpoint, mathable_hname, mathable_endpoint, mathable_url, status, schedules, internal = TRUE, overwrite = TRUE)
+usethis::use_data(api_endpoint, mathable_hname, mathable_endpoint, mathable_url, status, schedules, internal = TRUE, overwrite = TRUE)

@@ -64,8 +64,10 @@ extractStudentProgress <- function(notebooks, course_id, days_left) {
     schedule    <- netmathtools2:::schedules$MM461EGR
     course_type <- "XGR"
   } else {
-    schedule    <- netmathtools2:::schedules$MM461
-    course_type <- "REG"
+    # schedule    <- netmathtools2:::schedules$MM461
+    schedule    <- netmathtools2:::schedules$MM461EXT
+    # course_type <- "REG"
+    course_type <- "EXT"
   }
 
   # if days left is less than 0 then they probably have an extension pending

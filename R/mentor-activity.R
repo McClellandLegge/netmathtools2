@@ -134,9 +134,14 @@ getAsssignmentDetail <- function(netid, course_id) {
     purrr::discard(is.null) %>%
     data.table::rbindlist(fill = TRUE)
 
+  if (!"graded" %in% names(graded_assignments)) {
+    return(NULL)
+  }
+
   if (nrow(graded_assignments) > 0) {
+
     graded_assignments[, `:=`(
-      graded  = as.POSIXct(graded, tz = "UTC", format = "%Y-%m-%dT%H:%M:%OS")
+        graded  = as.POSIXct(graded, tz = "UTC", format = "%Y-%m-%dT%H:%M:%OS")
       , submit  = as.POSIXct(submit, tz = "UTC", format = "%Y-%m-%dT%H:%M:%OS")
       , student = s_netid
     )]
